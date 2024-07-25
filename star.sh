@@ -9,6 +9,10 @@ star()
     STAR_DIR="$HOME/${star_dir_name}"
     dir_separator="»"
 
+    ###################
+    # PARSE ARGUMENTS #
+    ###################
+
     positional_args=()
     stars_to_remove=()
     MODE=STORE
@@ -38,6 +42,7 @@ star()
                 done
                 ;;
             "l"|"load" )
+                # load without arguments is equivalent to "star list"
                 if [[ $# -eq 0 ]]; then
                     star list
                     return
@@ -58,6 +63,7 @@ star()
             "L"|"list" )
                 # handle the "list" case while reading arguments to stop the program immediately,
                 # no matter the other parameters
+
                 if [[ -d ${STAR_DIR} ]];then
                     # sorting according to the absolute path that the star refers to
                     find ${STAR_DIR} -type l -printf "\33[36m%f\33[0m -> \33[34m%l\33[0m\n" | column -t -s " " | sort -t">" -k2
@@ -79,6 +85,10 @@ star()
     if [[ ! -d "${STAR_DIR}" ]];then
         mkdir "${STAR_DIR}"
     fi
+
+    #########################
+    # PROCESS SELECTED MODE #
+    #########################
 
     case ${MODE} in
         STORE)
@@ -113,6 +123,8 @@ star()
                 if [[ -e "${STAR_DIR}/${dir_star}" ]]; then
                     rm "${STAR_DIR}/${dir_star}" || return
                     echo -e "Removed starred directory: \e[36m${dir_star}\e[0m"
+                else
+                    echo -e "Couldn't find any starred directory with the name: \e[36m${dir_star}\e[0m"
                 fi
             done
             ;;
@@ -125,7 +137,9 @@ alias sl="star l"
 alias sL="star L"
 alias srm="star rm"
 
-# COMPLETION:
+##############
+# COMPLETION #
+##############
 
 # https://askubuntu.com/questions/68175/how-to-create-script-with-auto-complete
 # https://web.archive.org/web/20190328055722/https://debian-administration.org/article/316/An_introduction_to_bash_completion_part_1
@@ -143,23 +157,31 @@ _star_completion()
     prev="${COMP_WORDS[COMP_CWORD-1]}"
     opts="load remove list reset"
 
+    # first and second comp words
     first_cw="${COMP_WORDS[COMP_CWORD-COMP_CWORD]}"
     second_cw="${COMP_WORDS[COMP_CWORD-COMP_CWORD+1]}"
 
+    # in REMOVE mode: suggest all starred directories, even after selecting a first star to remove
     if [[ "${first_cw}" == "srm" || "${second_cw}" == "remove" || "${second_cw}" == "rm" ]]; then
         COMPREPLY=( $(compgen -W "$(/bin/ls -A ${STAR_DIR})" -- ${cur}) )
         return 0
     fi
 
     case "${prev}" in
-        load|l|sl|remove|rm|srm)
+        load|l|sl)
+            # suggest all starred directories
             COMPREPLY=( $(compgen -W "$(/bin/ls -A ${STAR_DIR})" -- ${cur}) )
+            return 0
+            ;;
+        star)
+            # only suggest options when star is the first comp word
+            # to prevent suggesting options in case a starred directory is named "star"
+            [ "${COMP_CWORD}" -eq 1 ] && COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
             return 0
             ;;
         *)
             ;;
     esac
-    COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
 }
 complete -F _star_completion star
 complete -F _star_completion sl
