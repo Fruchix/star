@@ -2,8 +2,28 @@
 
 STAR_DIR="$HOME/.star"
 
+_star_prune()
+{
+    local broken_stars_name broken_stars_path
+    broken_stars_name=( $(find $STAR_DIR -xtype l -printf "%f\n") )
+    broken_stars_path=( $(find $STAR_DIR -xtype l -printf "%l\n") )
+
+    # return if no broken link was found
+    if [[ ${#broken_stars_name[@]} -le 0 ]]; then
+        return
+    fi
+
+    # else remove each broken link
+    for i in $(seq "${#broken_stars_name[@]}"); do
+        rm "${STAR_DIR}/${broken_stars_name[$i]}" || return
+        # echo -e "Pruned broken star: \e[36m${broken_stars_name[$i]}\e[0m -> \e[34m${broken_stars_path[$i]}\e[0m."
+    done
+}
+_star_prune
+
 star()
 {
+    _star_prune
     # all variables are local except STAR_DIR
     local star_dir_name positional_args stars_to_remove star_to_load dst_name dst_name_slash dst_basename dir_separator
 
