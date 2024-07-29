@@ -1,12 +1,13 @@
 #!/bin/bash
 
+STAR_DIR="$HOME/.star"
+
 star()
 {
     # all variables are local except STAR_DIR
     local star_dir_name positional_args stars_to_remove star_to_load dst_name dst_name_slash dst_basename dir_separator
 
     star_dir_name=".star"
-    STAR_DIR="$HOME/${star_dir_name}"
     dir_separator="»"
 
     ###################
@@ -28,7 +29,7 @@ star()
             "-" ) break 2;;
             "reset" )
                 while true; do
-                    read -p "Remove all starred directories and the \"${star_dir_name}\" directory? y/n " yn
+                    read -p "Remove all starred directories and the \".star\" directory? y/n " yn
                     case $yn in
                         [Yy]* )
                             if [[ -d ${STAR_DIR} ]];then
@@ -68,7 +69,7 @@ star()
                     # sorting according to the absolute path that the star refers to
                     find ${STAR_DIR} -type l -printf "\33[36m%f\33[0m -> \33[34m%l\33[0m\n" | column -t -s " " | sort -t">" -k2
                 else
-                    echo "No \"${star_dir_name}\" directory (will be created when adding new starred directories)."
+                    echo "No \".star\" directory (will be created when adding new starred directories)."
                 fi
                 return
                 ;;
@@ -119,12 +120,12 @@ star()
             fi
             ;;
         REMOVE)
-            for dir_star in "${stars_to_remove[@]}"; do
-                if [[ -e "${STAR_DIR}/${dir_star}" ]]; then
-                    rm "${STAR_DIR}/${dir_star}" || return
-                    echo -e "Removed starred directory: \e[36m${dir_star}\e[0m"
+            for star in "${stars_to_remove[@]}"; do
+                if [[ -e "${STAR_DIR}/${star}" ]]; then
+                    rm "${STAR_DIR}/${star}" || return
+                    echo -e "Removed starred directory: \e[36m${star}\e[0m"
                 else
-                    echo -e "Couldn't find any starred directory with the name: \e[36m${dir_star}\e[0m"
+                    echo -e "Couldn't find any starred directory with the name: \e[36m${star}\e[0m"
                 fi
             done
             ;;
@@ -163,14 +164,15 @@ _star_completion()
 
     # in REMOVE mode: suggest all starred directories, even after selecting a first star to remove
     if [[ "${first_cw}" == "srm" || "${second_cw}" == "remove" || "${second_cw}" == "rm" ]]; then
-        COMPREPLY=( $(compgen -W "$(/bin/ls -A ${STAR_DIR})" -- ${cur}) )
+        # suggest all starred directories
+        COMPREPLY=( $(compgen -W "$(find ${STAR_DIR} -type l -printf "%f ")" -- ${cur}) )
         return 0
     fi
 
     case "${prev}" in
         load|l|sl)
             # suggest all starred directories
-            COMPREPLY=( $(compgen -W "$(/bin/ls -A ${STAR_DIR})" -- ${cur}) )
+            COMPREPLY=( $(compgen -W "$(find ${STAR_DIR} -type l -printf "%f ")" -- ${cur}) )
             return 0
             ;;
         star)
