@@ -14,7 +14,7 @@ _star_prune()
     fi
 
     # else remove each broken link
-    for i in $(seq "${#broken_stars_name[@]}"); do
+    for i in $(seq 0 $(("${#broken_stars_name[@]}"-1)) ); do
         rm "${STAR_DIR}/${broken_stars_name[$i]}" || return
         # echo -e "Pruned broken star: \e[36m${broken_stars_name[$i]}\e[0m -> \e[34m${broken_stars_path[$i]}\e[0m."
     done
@@ -172,6 +172,7 @@ alias srm="star rm"
 
 _star_completion()
 {
+    _star_prune
     local cur prev opts first_cw second_cw
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
