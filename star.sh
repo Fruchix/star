@@ -4,6 +4,11 @@ STAR_DIR="$HOME/.star"
 
 _star_prune()
 {
+    # return if the star directory does not exist
+    if [[ ! -d ${STAR_DIR} ]];then
+        return
+    fi
+
     local broken_stars_name broken_stars_path
     broken_stars_name=( $(find $STAR_DIR -xtype l -printf "%f\n") )
     broken_stars_path=( $(find $STAR_DIR -xtype l -printf "%l\n") )
@@ -157,6 +162,7 @@ star()
 alias sl="star l"
 alias sL="star L"
 alias srm="star rm"
+alias unstar="star rm"
 
 ##############
 # COMPLETION #
@@ -184,7 +190,7 @@ _star_completion()
     second_cw="${COMP_WORDS[COMP_CWORD-COMP_CWORD+1]}"
 
     # in REMOVE mode: suggest all starred directories, even after selecting a first star to remove
-    if [[ "${first_cw}" == "srm" || "${second_cw}" == "remove" || "${second_cw}" == "rm" ]]; then
+    if [[ "${first_cw}" == "srm" || "${first_cw}" == "unstar" || "${second_cw}" == "remove" || "${second_cw}" == "rm" ]]; then
         # suggest all starred directories
         COMPREPLY=( $(compgen -W "$(find ${STAR_DIR} -type l -printf "%f ")" -- ${cur}) )
         return 0
@@ -209,3 +215,4 @@ _star_completion()
 complete -F _star_completion star
 complete -F _star_completion sl
 complete -F _star_completion srm
+complete -F _star_completion unstar
