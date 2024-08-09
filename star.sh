@@ -121,6 +121,9 @@ star()
             SRC_DIR=$(pwd)
             dst_name=$(basename "${SRC_DIR}")
 
+            stars_path=( $(find $STAR_DIR -printf "%l\n") )
+            [[ $stars_path =~ (^|[[:space:]])${SRC_DIR}($|[[:space:]]) ]] && echo "Directory is already starred."; return
+
             PWD=$(pwd)
             while [[ -e ${STAR_DIR}/${dst_name} ]]; do
                 dst_name_slash=${dst_name//"${dir_separator}"/\/}
