@@ -2,6 +2,9 @@
 
 STAR_DIR="$HOME/.star"
 
+# _star_prune
+# Remove all broken symlinks in the ".star" directory.
+# A broken symlink corresponds to a starred directory that does not exist anymore.
 _star_prune()
 {
     # return if the star directory does not exist
@@ -24,20 +27,56 @@ _star_prune()
         # echo -e "Pruned broken star: \e[36m${broken_stars_name[$i]}\e[0m -> \e[34m${broken_stars_path[$i]}\e[0m."
     done
 }
-_star_prune
 
 star()
 {
     _star_prune
     # all variables are local except STAR_DIR
-    local star_dir_name positional_args stars_to_remove star_to_load dst_name dst_name_slash dst_basename dir_separator
+    local star_dir_name positional_args stars_to_remove star_to_load dst_name dst_name_slash dst_basename dir_separator star_help
+
+    star_help="Usage: star [OPTION]
+
+Without option: add the current directory to the list of starred directories.
+
+OPTION
+    L|list
+        list all starred directories
+
+    l|load [star]
+        change directory into the starred directory.
+        Equivalent to \"star list\" when no starred directory is given.
+
+        <star> should be the name of a starred directory 
+        (one that is listed using \"star list\").
+
+    rm|remove <star> [star] [star] [...]
+        remove a starred directory.
+
+        <star> should be the name of a starred directory.
+
+    reset
+        completely remove the \".star\" directory
+        (hence remove the starred directories).
+
+    h|help|--help
+        displays this message
+
+ALIASES
+The following aliases are provided:
+    sL
+        corresponds to \"star list\"
+    sl
+        corresponds to \"star load\"
+    srm
+        corresponds to \"star remove\"
+    unstar
+        corresponds to \"star remove\"
+"
 
     star_dir_name=".star"
     dir_separator="»"
 
-    ###################
-    # PARSE ARGUMENTS #
-    ###################
+    # Parse the arguments
 
     positional_args=()
     stars_to_remove=()
@@ -98,6 +137,10 @@ star()
                 fi
                 return
                 ;;
+            "h"|"help"|"--help" )
+                echo "${star_help}"
+                return
+                ;;
             -*)
                 echo >&2 "Invalid option: $opt"
                 return
@@ -112,10 +155,10 @@ star()
         mkdir "${STAR_DIR}"
     fi
 
-    #########################
-    # PROCESS SELECTED MODE #
-    #########################
-
+    # process the selected mode, in
+    #   - STORE: add a new starred directory
+    #   - LOAD: move to a starred directory
+    #   - REMOVE: remove a starred directory
     case ${MODE} in
         STORE)
             SRC_DIR=$(pwd)
@@ -162,15 +205,6 @@ star()
     esac
 }
 
-alias sl="star l"
-alias sL="star L"
-alias srm="star rm"
-alias unstar="star rm"
-
-##############
-# COMPLETION #
-##############
-
 # https://askubuntu.com/questions/68175/how-to-create-script-with-auto-complete
 # https://web.archive.org/web/20190328055722/https://debian-administration.org/article/316/An_introduction_to_bash_completion_part_1
 # https://web.archive.org/web/20140405211529/http://www.debian-administration.org/article/317/An_introduction_to_bash_completion_part_2
@@ -178,7 +212,8 @@ alias unstar="star rm"
 # https://unix.stackexchange.com/questions/273948/bash-completion-for-user-without-access-to-etc
 # https://unix.stackexchange.com/questions/4219/how-do-i-get-bash-completion-for-command-aliases
 
-
+# _star_completion
+# Provides completion for this "star" tool, and for its different aliases (see aliases below).
 _star_completion()
 {
     _star_prune
@@ -186,7 +221,7 @@ _star_completion()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="load remove list reset"
+    opts="load remove list reset help"
 
     # first and second comp words
     first_cw="${COMP_WORDS[COMP_CWORD-COMP_CWORD]}"
@@ -215,7 +250,18 @@ _star_completion()
             ;;
     esac
 }
+
+# create useful aliases
+alias sl="star l"       # star load
+alias sL="star L"       # star list
+alias srm="star rm"     # star remove
+alias unstar="star rm"  # star remove
+
+# activate completion for this program and the aliases
 complete -F _star_completion star
 complete -F _star_completion sl
 complete -F _star_completion srm
 complete -F _star_completion unstar
+
+# remove broken symlinks directly when sourcing this file
+_star_prune
