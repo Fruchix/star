@@ -59,7 +59,7 @@ OPTION
         completely remove the \".star\" directory
         (hence remove the starred directories).
 
-    h|help|--help
+    h|help|-h|--help
         displays this message
 
 ALIASES
@@ -136,7 +136,7 @@ The following aliases are provided:
                 fi
                 return
                 ;;
-            "h"|"help"|"--help" )
+            "h"|"help"|"-h"|"--help" )
                 echo "${star_help}"
                 return
                 ;;
