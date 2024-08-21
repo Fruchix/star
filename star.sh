@@ -33,7 +33,7 @@ star()
 {
     _star_prune
     # all variables are local except STAR_DIR
-    local positional_args stars_to_remove star_to_load dst_name dst_name_slash dst_basename star_help stars_list
+    local positional_args stars_to_remove star_to_load dst_name dst_name_slash dst_basename star_help stars_list stars_path
 
     star_help="Usage: star [OPTION]
 
@@ -83,26 +83,18 @@ The following aliases are provided:
     while [[ $# -gt 0 ]]; do
         opt="$1"
         shift
+
+        # remove multiple stars
         if [[ ${MODE} == REMOVE ]]; then
             stars_to_remove+=("${opt//\//"${_STAR_DIR_SEPARATOR}"}")
         fi
+
         case "$opt" in
             "--" ) break 2;;
             "-" ) break 2;;
             "reset" )
-                while true; do
-                    read -p "Remove all starred directories and the \".star\" directory? y/n " yn
-                    case $yn in
-                        [Yy]* )
-                            if [[ -d ${STAR_DIR} ]];then
-                                rm -r "${STAR_DIR}"
-                            fi
-                            return;;
-                        [Nn]* ) return;;
-                        * )
-                            echo "Not a valid answer.";;
-                    esac
-                done
+                MODE=RESET
+                break
                 ;;
             "l"|"load" )
                 # load without arguments is equivalent to "star list"
@@ -124,17 +116,9 @@ The following aliases are provided:
                 shift
                 ;;
             "L"|"list" )
-                # handle the "list" case while reading arguments to stop the program immediately,
-                # no matter the other parameters
-
-                if [[ -d ${STAR_DIR} ]];then
-                    # sorting according to the absolute path that the star refers to
-                    stars_list=$(find ${STAR_DIR} -type l -printf "\33[36m%f\33[0m -> \33[34m%l\33[0m\n" | column -t -s " " | sort -t">" -k2)
-                    echo "${stars_list//"${_STAR_DIR_SEPARATOR}"//}"
-                else
-                    echo "No \".star\" directory (will be created when adding new starred directories)."
-                fi
-                return
+                MODE=LIST
+                # handle the "list" case immediately, no matter the other parameters
+                break
                 ;;
             "h"|"help"|"-h"|"--help" )
                 echo "${star_help}"
@@ -150,16 +134,13 @@ The following aliases are provided:
        esac
     done
 
-    if [[ ! -d "${STAR_DIR}" ]];then
-        mkdir "${STAR_DIR}"
-    fi
-
-    # process the selected mode, in
-    #   - STORE: add a new starred directory
-    #   - LOAD: move to a starred directory
-    #   - REMOVE: remove a starred directory
+    # process the selected mode
     case ${MODE} in
         STORE)
+            if [[ ! -d "${STAR_DIR}" ]]; then
+                mkdir "${STAR_DIR}"
+            fi
+
             SRC_DIR=$(pwd)
             dst_name=$(basename "${SRC_DIR}")
 
@@ -200,13 +181,32 @@ The following aliases are provided:
             echo -e "Added new starred directory: \e[36m${dst_name//"${_STAR_DIR_SEPARATOR}"//}\e[0m -> \e[34m${SRC_DIR}\e[0m"
             ;;
         LOAD)
+            if [[ ! -d "${STAR_DIR}" ]];then
+                echo "No star can be loaded, as there is not any starred directory."
+                return
+            fi
+
             if [[ ! -e ${STAR_DIR}/${star_to_load} ]]; then
                 echo -e "Star \e[36m${star_to_load}\e[0m does not exist."
             else
                 cd -P "${STAR_DIR}/${star_to_load}" || return
             fi
             ;;
+        LIST)
+            if [[ ! -d "${STAR_DIR}" ]];then
+                echo "No \".star\" directory (will be created when adding new starred directories)."
+            else
+                # sorting according to the absolute path that the star refers to
+                stars_list=$(find ${STAR_DIR} -type l -printf "\33[36m%f\33[0m -> \33[34m%l\33[0m\n" | column -t -s " " | sort -t">" -k2)
+                echo "${stars_list//"${_STAR_DIR_SEPARATOR}"//}"
+            fi
+            ;;
         REMOVE)
+            if [[ ! -d "${STAR_DIR}" ]];then
+                echo "No star can be removed, as there is not any starred directory."
+                return
+            fi
+
             for star in "${stars_to_remove[@]}"; do
                 if [[ -e "${STAR_DIR}/${star}" ]]; then
                     rm "${STAR_DIR}/${star}" || return
@@ -214,6 +214,21 @@ The following aliases are provided:
                 else
                     echo -e "Couldn't find any starred directory with the name: \e[36m${star//"${_STAR_DIR_SEPARATOR}"//}\e[0m"
                 fi
+            done
+            ;;
+        RESET)
+            while true; do
+                read -p "Remove all starred directories and the \".star\" directory? y/n " yn
+                case $yn in
+                    [Yy]* )
+                        if [[ -d ${STAR_DIR} ]];then
+                            rm -r "${STAR_DIR}"
+                        fi
+                        return;;
+                    [Nn]* ) return;;
+                    * )
+                        echo "Not a valid answer.";;
+                esac
             done
             ;;
         *)
@@ -243,7 +258,8 @@ _star_completion()
     first_cw="${COMP_WORDS[COMP_CWORD-COMP_CWORD]}"
     second_cw="${COMP_WORDS[COMP_CWORD-COMP_CWORD+1]}"
 
-    stars_list=$(find ${STAR_DIR} -type l -printf "%f ")
+    # get list of stars only if ".star" directory exists
+    stars_list=$([[ -d "${STAR_DIR}" ]] && find ${STAR_DIR} -type l -printf "%f ")
 
     # in REMOVE mode: suggest all starred directories, even after selecting a first star to remove
     if [[ "${first_cw}" == "srm" || "${first_cw}" == "unstar" || "${second_cw}" == "remove" || "${second_cw}" == "rm" ]]; then
