@@ -217,15 +217,25 @@ The following aliases are provided:
             done
             ;;
         RESET)
+            if [[ ! -d "${STAR_DIR}" ]];then
+                echo "No \".star\" directory to remove."
+                return
+            fi
+
             while true; do
-                read -p "Remove all starred directories and the \".star\" directory? y/n " yn
-                case $yn in
-                    [Yy]* )
+                echo -n "Remove the \".star\" directory? (removes all starred directories) y/N "
+                read user_input
+                case $user_input in
+                    [Yy]*|yes )
                         if [[ -d ${STAR_DIR} ]];then
-                            rm -r "${STAR_DIR}"
+                            rm -r "${STAR_DIR}" && echo "All stars and the \".star\" directory have been removed." || echo "Failed to remove the \".star\" directory."
                         fi
                         return;;
-                    [Nn]* ) return;;
+                    # case "" corresponds to pressing enter
+                    # by default, pressing enter aborts the reset
+                    [Nn]*|no|"" )
+                        echo "Aborting reset." 
+                        return;;
                     * )
                         echo "Not a valid answer.";;
                 esac
