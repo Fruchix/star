@@ -13,9 +13,8 @@ _star_prune()
         return
     fi
 
-    local broken_stars_name broken_stars_path
+    local broken_stars_name i
     broken_stars_name=( $(find $STAR_DIR -xtype l -printf "%f\n") )
-    broken_stars_path=( $(find $STAR_DIR -xtype l -printf "%l\n") )
 
     # return if no broken link was found
     if [[ ${#broken_stars_name[@]} -le 0 ]]; then
@@ -25,16 +24,17 @@ _star_prune()
     # else remove each broken link
     for i in $(seq 0 $(("${#broken_stars_name[@]}"-1)) ); do
         rm "${STAR_DIR}/${broken_stars_name[$i]}" || return
-        # echo -e "Pruned broken star: \e[36m${broken_stars_name[$i]}\e[0m -> \e[34m${broken_stars_path[$i]}\e[0m."
     done
 }
 
 star()
 {
     _star_prune
-    # all variables are local except STAR_DIR
-    local positional_args stars_to_remove star_to_load dst_name dst_name_slash dst_basename star_help stars_list stars_path
 
+    # all variables are local except STAR_DIR and _STAR_DIR_SEPARATOR
+    local positional_args star_to_store stars_to_remove star_to_load star_help mode
+    local dst_name dst_name_slash dst_basename
+    local star stars_list stars_path src_dir opt current_pwd user_input
     star_help="Usage: star [OPTION]
 
 Without option: add the current directory to the list of starred directories.
@@ -79,14 +79,14 @@ The following aliases are provided:
     positional_args=()
     star_to_store="${1-}"   # default value is an empty string if $1 is unset
     stars_to_remove=()
-    MODE=STORE
+    mode=STORE
 
     while [[ $# -gt 0 ]]; do
         opt="$1"
         shift
 
         # remove multiple stars
-        if [[ ${MODE} == REMOVE ]]; then
+        if [[ ${mode} == REMOVE ]]; then
             stars_to_remove+=("${opt//\//"${_STAR_DIR_SEPARATOR}"}")
         fi
 
@@ -94,7 +94,7 @@ The following aliases are provided:
             "--" ) break 2;;
             "-" ) break 2;;
             "reset" )
-                MODE=RESET
+                mode=RESET
                 break
                 ;;
             "l"|"load" )
@@ -104,7 +104,7 @@ The following aliases are provided:
                     return
                 fi
                 star_to_load="${1//\//"${_STAR_DIR_SEPARATOR}"}"
-                MODE=LOAD
+                mode=LOAD
                 shift
                 ;;
             "rm"|"remove" )
@@ -113,11 +113,11 @@ The following aliases are provided:
                     return
                 fi
                 stars_to_remove+=("${1//\//"${_STAR_DIR_SEPARATOR}"}")
-                MODE=REMOVE
+                mode=REMOVE
                 shift
                 ;;
             "L"|"list" )
-                MODE=LIST
+                mode=LIST
                 # handle the "list" case immediately, no matter the other parameters
                 break
                 ;;
@@ -136,24 +136,24 @@ The following aliases are provided:
     done
 
     # process the selected mode
-    case ${MODE} in
+    case ${mode} in
         STORE)
             if [[ ! -d "${STAR_DIR}" ]]; then
                 mkdir "${STAR_DIR}"
             fi
 
-            SRC_DIR=$(pwd)
+            src_dir=$(pwd)
 
             if [[ ! "${star_to_store}" == "" ]]; then
                 # replace slashes by dir separator char: a star name can contain slashes
                 dst_name="${star_to_store//\//"${_STAR_DIR_SEPARATOR}"}"
             else
-            dst_name=$(basename "${SRC_DIR}")
+                dst_name=$(basename "${src_dir}")
             fi
 
             # do not star this directory if it is already starred (even under another name)
             stars_path=( "$(find "$STAR_DIR" -printf "%l\n")" )
-            if [[ "${stars_path[*]}" =~ (^|[[:space:]])${SRC_DIR}($|[[:space:]]) ]]; then
+            if [[ "${stars_path[*]}" =~ (^|[[:space:]])${src_dir}($|[[:space:]]) ]]; then
                 echo "Directory is already starred."
                 return
             fi
@@ -172,18 +172,18 @@ The following aliases are provided:
             # that will be replaced by a slash when printing the star name or suggesting completion.
             # The variable _STAR_DIR_SEPARATOR must not be manualy changed, as it would cause the non-recognition of previously starred directories (their star name could contain that separator).
             if [[ "${star_to_store}" == "" ]]; then
-            PWD=$(pwd)
-            while [[ -e ${STAR_DIR}/${dst_name} ]]; do
-                dst_name_slash=${dst_name//"${_STAR_DIR_SEPARATOR}"//}
-                dst_basename=$(basename "${PWD%%"$dst_name_slash"}")
+                current_pwd=$(pwd)
+                while [[ -e ${STAR_DIR}/${dst_name} ]]; do
+                    dst_name_slash=${dst_name//"${_STAR_DIR_SEPARATOR}"//}
+                    dst_basename=$(basename "${current_pwd%%"$dst_name_slash"}")
 
-                if [[ "${dst_basename}" == "/" ]]; then
-                    echo -e "Directory already starred with maximum possible path: \e[36m${dst_name_slash}\e[0m"
-                    return
-                fi
+                    if [[ "${dst_basename}" == "/" ]]; then
+                        echo -e "Directory already starred with maximum possible path: \e[36m${dst_name_slash}\e[0m"
+                        return
+                    fi
 
-                dst_name="${dst_basename}${_STAR_DIR_SEPARATOR}${dst_name}"
-            done
+                    dst_name="${dst_basename}${_STAR_DIR_SEPARATOR}${dst_name}"
+                done
             # When adding a new starred directory with a given name (as argument),
             # then the name should not already exist
             else
@@ -194,8 +194,8 @@ The following aliases are provided:
                 fi
             fi
 
-            ln -s "${SRC_DIR}" "${STAR_DIR}/${dst_name}" || return
-            echo -e "Added new starred directory: \e[36m${dst_name//"${_STAR_DIR_SEPARATOR}"//}\e[0m -> \e[34m${SRC_DIR}\e[0m"
+            ln -s "${src_dir}" "${STAR_DIR}/${dst_name}" || return
+            echo -e "Added new starred directory: \e[36m${dst_name//"${_STAR_DIR_SEPARATOR}"//}\e[0m -> \e[34m${src_dir}\e[0m"
             ;;
         LOAD)
             if [[ ! -d "${STAR_DIR}" ]];then
@@ -289,7 +289,11 @@ _star_completion()
     stars_list=$([[ -d "${STAR_DIR}" ]] && find ${STAR_DIR} -type l -printf "%f ")
 
     # in REMOVE mode: suggest all starred directories, even after selecting a first star to remove
-    if [[ "${first_cw}" == "srm" || "${first_cw}" == "unstar" || "${second_cw}" == "remove" || "${second_cw}" == "rm" ]]; then
+    if [[ "${first_cw}" == "srm" \
+        || "${first_cw}" == "unstar" \
+        || "${second_cw}" == "remove" \
+        || "${second_cw}" == "rm" \
+    ]]; then
         # suggest all starred directories
         COMPREPLY=( $(compgen -W "${stars_list//"${_STAR_DIR_SEPARATOR}"/\/}" -- ${cur}) )
         return 0
