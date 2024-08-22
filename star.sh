@@ -32,7 +32,7 @@ star()
     _star_prune
 
     # all variables are local except STAR_DIR and _STAR_DIR_SEPARATOR
-    local positional_args star_to_store stars_to_remove star_to_load star_help mode
+    local positional_args star_to_store stars_to_remove star_to_load star_help mode rename_src rename_dst
     local dst_name dst_name_slash dst_basename
     local star stars_list stars_path src_dir opt current_pwd user_input
     star_help="Usage: star [NAME|OPTION]
@@ -58,6 +58,9 @@ OPTION
 
         <star> should be the name of a starred directory 
         (one that is listed using \"star list\").
+
+    rename <existing star> <new star name>
+        Rename an existing star.
 
     rm|remove <star> [star] [star] [...]
         Remove one or more starred directories.
@@ -114,6 +117,16 @@ The following aliases are provided:
                 star_to_load="${1//\//"${_STAR_DIR_SEPARATOR}"}"
                 mode=LOAD
                 shift
+                ;;
+            "rename" )
+                mode=RENAME
+                if [[ $# -lt 2 ]]; then
+                    echo "Missing argument. Usage: star rename <existing star> <new star name>"
+                    return
+                fi
+                rename_src="${1//\//"${_STAR_DIR_SEPARATOR}"}"
+                rename_dst="${2//\//"${_STAR_DIR_SEPARATOR}"}"
+                break
                 ;;
             "rm"|"remove" )
                 if [[ $# -eq 0 ]]; then
@@ -228,6 +241,19 @@ The following aliases are provided:
                 echo "${stars_list//"${_STAR_DIR_SEPARATOR}"//}"
             fi
             ;;
+        RENAME)
+            if [[ -e "${STAR_DIR}/${rename_src}" ]]; then
+                if [[ -e "${STAR_DIR}/${rename_dst}" ]]; then
+                    echo -e "There is already a star named \e[36m${rename_dst}\e[0m."
+                    return
+                fi
+
+                mv "${STAR_DIR}/${rename_src}" "${STAR_DIR}/${rename_dst}" || return
+                echo -e "Renamed star \e[36m${rename_src//"${_STAR_DIR_SEPARATOR}"//}\e[0m to \e[36m${rename_dst//"${_STAR_DIR_SEPARATOR}"//}\e[0m."
+            else
+                echo -e "Star \e[36m${rename_src}\e[0m does not exist."
+            fi
+            ;;
         REMOVE)
             if [[ ! -d "${STAR_DIR}" ]];then
                 echo "No star can be removed, as there is not any starred directory."
@@ -289,7 +315,7 @@ _star_completion()
     COMPREPLY=()
     cur="${COMP_WORDS[COMP_CWORD]}"
     prev="${COMP_WORDS[COMP_CWORD-1]}"
-    opts="load remove list reset help"
+    opts="load rename remove list reset help"
 
     # first and second comp words
     first_cw="${COMP_WORDS[COMP_CWORD-COMP_CWORD]}"
@@ -310,7 +336,7 @@ _star_completion()
     fi
 
     case "${prev}" in
-        load|l|sl)
+        load|l|sl|rename)
             # suggest all starred directories
             COMPREPLY=( $(compgen -W "${stars_list//"${_STAR_DIR_SEPARATOR}"/\/}" -- ${cur}) )
             return 0

@@ -51,6 +51,12 @@ Equivalent to "star list" when no starred directory is provided.
 > Also updates the last accessed time (used to sort stars when listing them).
 ---
 ```
+star rename <existing star> <new star name>
+```
+Rename an existing star.
+
+---
+```
 star remove <star> [star] [star] [...]
 ```
 Remove one or more starred directories.
