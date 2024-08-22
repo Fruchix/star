@@ -207,14 +207,16 @@ The following aliases are provided:
                 echo -e "Star \e[36m${star_to_load}\e[0m does not exist."
             else
                 cd -P "${STAR_DIR}/${star_to_load}" || return
+                # update access time
+                touch -ah "${STAR_DIR}/${star_to_load}"
             fi
             ;;
         LIST)
             if [[ ! -d "${STAR_DIR}" ]];then
                 echo "No \".star\" directory (will be created when adding new starred directories)."
             else
-                # sorting according to the absolute path that the star refers to
-                stars_list=$(find ${STAR_DIR} -type l -printf "\33[36m%f\33[0m -> \33[34m%l\33[0m\n" | column -t -s " " | sort -t">" -k2)
+                # sort according to access time (last accessed is on top)
+                stars_list=$(find ${STAR_DIR} -type l -printf "%As \33[36m%f\33[0m -> \33[34m%l\33[0m\n" | column -t -s " " | sort -nr | cut --delimiter=" " --fields=3-)
                 echo "${stars_list//"${_STAR_DIR_SEPARATOR}"//}"
             fi
             ;;
