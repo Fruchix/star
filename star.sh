@@ -216,7 +216,7 @@ The following aliases are provided:
                 echo "No \".star\" directory (will be created when adding new starred directories)."
             else
                 # sort according to access time (last accessed is on top)
-                stars_list=$(find ${STAR_DIR} -type l -printf "%As \33[36m%f\33[0m -> \33[34m%l\33[0m\n" | column -t -s " " | sort -nr | cut --delimiter=" " --fields=3-)
+                stars_list=$(find ${STAR_DIR} -type l -printf "%As \33[36m%f\33[0m -> \33[34m%l\33[0m\n" | column -t -s " " | sort -nr | cut -d" " -f3-)
                 echo "${stars_list//"${_STAR_DIR_SEPARATOR}"//}"
             fi
             ;;
