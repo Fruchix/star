@@ -77,6 +77,7 @@ The following aliases are provided:
     # Parse the arguments
 
     positional_args=()
+    star_to_store="${1-}"   # default value is an empty string if $1 is unset
     stars_to_remove=()
     MODE=STORE
 
@@ -142,9 +143,15 @@ The following aliases are provided:
             fi
 
             SRC_DIR=$(pwd)
-            dst_name=$(basename "${SRC_DIR}")
 
-            # do not star this directory if it is already starred
+            if [[ ! "${star_to_store}" == "" ]]; then
+                # replace slashes by dir separator char: a star name can contain slashes
+                dst_name="${star_to_store//\//"${_STAR_DIR_SEPARATOR}"}"
+            else
+            dst_name=$(basename "${SRC_DIR}")
+            fi
+
+            # do not star this directory if it is already starred (even under another name)
             stars_path=( "$(find "$STAR_DIR" -printf "%l\n")" )
             if [[ "${stars_path[*]}" =~ (^|[[:space:]])${SRC_DIR}($|[[:space:]]) ]]; then
                 echo "Directory is already starred."
@@ -164,6 +171,7 @@ The following aliases are provided:
             # As it is not possible to use slashes in file names, we use the special char _STAR_DIR_SEPARATOR to split "bar" and "config", 
             # that will be replaced by a slash when printing the star name or suggesting completion.
             # The variable _STAR_DIR_SEPARATOR must not be manualy changed, as it would cause the non-recognition of previously starred directories (their star name could contain that separator).
+            if [[ "${star_to_store}" == "" ]]; then
             PWD=$(pwd)
             while [[ -e ${STAR_DIR}/${dst_name} ]]; do
                 dst_name_slash=${dst_name//"${_STAR_DIR_SEPARATOR}"//}
@@ -176,6 +184,15 @@ The following aliases are provided:
 
                 dst_name="${dst_basename}${_STAR_DIR_SEPARATOR}${dst_name}"
             done
+            # When adding a new starred directory with a given name (as argument),
+            # then the name should not already exist
+            else
+                dst_name_slash=${dst_name//"${_STAR_DIR_SEPARATOR}"//}
+                if [[ -e ${STAR_DIR}/${dst_name} ]]; then
+                    echo -e "A directory is already starred with the name \"${dst_name_slash}\": $(find "${STAR_DIR}/${dst_name_slash}" -type l -printf "\33[36m%f\33[0m -> \33[34m%l\33[0m\n")"
+                    return
+                fi
+            fi
 
             ln -s "${SRC_DIR}" "${STAR_DIR}/${dst_name}" || return
             echo -e "Added new starred directory: \e[36m${dst_name//"${_STAR_DIR_SEPARATOR}"//}\e[0m -> \e[34m${SRC_DIR}\e[0m"
