@@ -35,29 +35,37 @@ star()
     local positional_args star_to_store stars_to_remove star_to_load star_help mode
     local dst_name dst_name_slash dst_basename
     local star stars_list stars_path src_dir opt current_pwd user_input
-    star_help="Usage: star [OPTION]
+    star_help="Usage: star [NAME|OPTION]
 
-Without option: add the current directory to the list of starred directories.
+Without OPTION:
+- Add the current directory to the list of starred directories.
+- The new star will be named after NAME if provided.
+- NAME must be unique (among all stars).
+- NAME can be anything that is not a reserved OPTION keywords (see below).
+- NAME can also contain slashes /.
+
+With OPTION:
+- Will execute the feature associated with this option.
+- OPTION can be one of list, load, remove, reset, help, or one of there shortnames (such as -h for help).
 
 OPTION
     L|list
-        list all starred directories
+        List all starred directories, sorted according to last load (top ones are the last loaded stars).
 
     l|load [star]
-        change directory into the starred directory.
+        Navigate into the starred directory.
         Equivalent to \"star list\" when no starred directory is given.
 
         <star> should be the name of a starred directory 
         (one that is listed using \"star list\").
 
     rm|remove <star> [star] [star] [...]
-        remove one or more starred directories.
+        Remove one or more starred directories.
 
         <star> should be the name of a starred directory.
 
     reset
-        completely remove the \".star\" directory
-        (hence remove the starred directories).
+        Remove the \".star\" directory (hence remove the starred directories).
 
     h|help|-h|--help
         displays this message
