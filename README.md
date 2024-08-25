@@ -1,6 +1,6 @@
 # star
 
-star allows you to bookmark your favorite folders and instantly navigate to them.
+star is a CLI tool that allows you to bookmark your favorite folders and instantly navigate to them.
 
 ## Installation
 
