@@ -6,7 +6,7 @@ star is a CLI tool that allows you to bookmark your favorite folders and instant
 
 Clone the repo and source the file [`star.sh`](./star.sh):
 ```bash
-git clone git@github.com:Fruchix/star.git
+git clone https://github.com/Fruchix/star.git
 cd star
 . star.sh           # equivalent of "source star.sh"s
 ```
