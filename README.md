@@ -65,9 +65,10 @@ Remove one or more starred directories.
 
 ---
 ```
-star reset
+star reset [-f|--force]
 ```
 Remove the ".star" directory (thus remove the starred directories).
+The argument -f or --force will force the reset without prompting the user.
 
 ---
 ```

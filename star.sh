@@ -34,7 +34,7 @@ star()
     # all variables are local except STAR_DIR and _STAR_DIR_SEPARATOR
     local positional_args star_to_store stars_to_remove star_to_load star_help mode rename_src rename_dst
     local dst_name dst_name_slash dst_basename
-    local star stars_list stars_path src_dir opt current_pwd user_input
+    local star stars_list stars_path src_dir opt current_pwd user_input force_reset
     star_help="Usage: star [NAME|OPTION]
 
 Without OPTION:
@@ -67,8 +67,9 @@ OPTION
 
         <star> should be the name of a starred directory.
 
-    reset
+    reset [-f|--force]
         Remove the \".star\" directory (hence remove the starred directories).
+        The argument -f or --force will force the reset without prompting the user.
 
     h|help|-h|--help
         displays this message
@@ -90,6 +91,7 @@ The following aliases are provided:
     positional_args=()
     star_to_store="${1-}"   # default value is an empty string if $1 is unset
     stars_to_remove=()
+    force_reset=0
     mode=STORE
 
     while [[ $# -gt 0 ]]; do
@@ -106,6 +108,9 @@ The following aliases are provided:
             "-" ) break 2;;
             "reset" )
                 mode=RESET
+                if [[ "$1" == "-f" || "$1" == "--force" ]]; then
+                    force_reset=1
+                fi
                 break
                 ;;
             "l"|"load" )
@@ -275,14 +280,17 @@ The following aliases are provided:
                 return
             fi
 
+            if [[ "${force_reset}" -eq 1 ]]; then
+                rm -r "${STAR_DIR}" && echo "All stars and the \".star\" directory have been removed." || echo "Failed to remove the \".star\" directory."
+                return
+            fi
+
             while true; do
                 echo -n "Remove the \".star\" directory? (removes all starred directories) y/N "
                 read user_input
                 case $user_input in
                     [Yy]*|yes )
-                        if [[ -d ${STAR_DIR} ]];then
-                            rm -r "${STAR_DIR}" && echo "All stars and the \".star\" directory have been removed." || echo "Failed to remove the \".star\" directory."
-                        fi
+                        rm -r "${STAR_DIR}" && echo "All stars and the \".star\" directory have been removed." || echo "Failed to remove the \".star\" directory."
                         return;;
                     # case "" corresponds to pressing enter
                     # by default, pressing enter aborts the reset
@@ -345,6 +353,10 @@ _star_completion()
             # only suggest options when star is the first comp word
             # to prevent suggesting options in case a starred directory is named "star"
             [ "${COMP_CWORD}" -eq 1 ] && COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+            return 0
+            ;;
+        reset)
+            COMPREPLY=( $(compgen -W "-f --force" -- ${cur}) )
             return 0
             ;;
         *)
