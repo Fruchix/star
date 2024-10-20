@@ -13,7 +13,7 @@ _star_prune()
         return
     fi
 
-    local broken_stars_name i
+    local broken_stars_name bl
     broken_stars_name=( $(find $STAR_DIR -xtype l -printf "%f\n") )
 
     # return if no broken link was found
@@ -22,8 +22,8 @@ _star_prune()
     fi
 
     # else remove each broken link
-    for i in $(seq 0 $(("${#broken_stars_name[@]}"-1)) ); do
-        rm "${STAR_DIR}/${broken_stars_name[$i]}" || return
+    for bl in "${broken_stars_name[@]}"; do
+        rm "${STAR_DIR}/${bl}" || return
     done
 }
 
