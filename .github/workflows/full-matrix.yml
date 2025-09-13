@@ -11,7 +11,7 @@ on:
 
 
 jobs:
-  tests:
+  matrix:
     strategy:
       # see all results even if one fails
       fail-fast: false
