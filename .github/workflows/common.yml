@@ -19,7 +19,7 @@ jobs:
 
       - name: Install bats
         run: |
-          apk add --no-cache git
+          apk add --no-cache git findutils util-linux coreutils
           git clone https://github.com/bats-core/bats-core.git
           ./bats-core/install.sh /usr/local
 
