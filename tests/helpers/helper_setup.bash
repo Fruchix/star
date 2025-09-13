@@ -15,5 +15,6 @@ setup_tmpdir() {
 }
 
 teardown_tmpdir() {
+  tree -a "$TEST_ROOT"
   rm -rf "$TEST_ROOT"
 }
