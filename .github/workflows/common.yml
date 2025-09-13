@@ -19,7 +19,11 @@ jobs:
 
       - name: Install bats
         run: |
-          apk add --no-cache git findutils util-linux coreutils
+          case "${{ inputs.shell }}" in
+            "bash:"*) apk add --no-cache git findutils util-linux coreutils ;;
+            zsh) apt install git findutils util-linux coreutils ;;
+          esac
+          
           git clone https://github.com/bats-core/bats-core.git
           ./bats-core/install.sh /usr/local
 
@@ -53,6 +57,7 @@ jobs:
           TEST_SHELL="$SHELL_PATH" bats tests/envvars
 
       - name: Performance tests
+        if: always()
         run: |
           case "${{ inputs.shell }}" in
             bash3|bash4|bash5) SHELL_PATH="/usr/local/bin/bash" ;;
