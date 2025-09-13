@@ -16,7 +16,7 @@ jobs:
       # see all results even if one fails
       fail-fast: false
       matrix:
-        shell: ["bash:3.2", "bash:4.0", "bash:5.2", "zshusers/zsh:latest"]
+        shell: ["bash:3.2", "bash:4.0", "bash:5.2", "zshusers/zsh:5.9"]
     uses: ./.github/workflows/common.yml
     with:
       shell: ${{ matrix.shell }}

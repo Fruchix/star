@@ -20,8 +20,8 @@ jobs:
       - name: Install bats
         run: |
           case "${{ inputs.shell }}" in
-            "bash:"*) apk add --no-cache git findutils util-linux coreutils ;;
-            zsh) apt install git findutils util-linux coreutils ;;
+            "bash:"*) apk add --no-cache git findutils util-linux coreutils tree ;;
+            zsh) install_packages git findutils util-linux coreutils tree ;;
           esac
           
           git clone https://github.com/bats-core/bats-core.git
