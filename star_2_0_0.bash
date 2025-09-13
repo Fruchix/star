@@ -74,7 +74,7 @@ _star_add_variable()
     local star_path=$2
     local env_var_name
 
-    star_name="${star_name//"${_STAR_DIR_SEPARATOR}"/_}"
+    star_name="${star_name//${_STAR_DIR_SEPARATOR}/_}"
 
     # convert name to a suitable environment variable name
     star_name=$(echo "$star_name" | tr ' +-.!?():,;=' '_' | tr --complement --delete "a-zA-Z0-9_" | tr '[:lower:]' '[:upper:]')
@@ -176,7 +176,7 @@ star()
 
         # remove multiple stars
         if [[ ${mode} == REMOVE ]]; then
-            stars_to_remove+=("${opt//\//"${_STAR_DIR_SEPARATOR}"}")
+            stars_to_remove+=("${opt//\//${_STAR_DIR_SEPARATOR}}")
             continue
         fi
 
@@ -219,7 +219,7 @@ star()
                     star-help --mode=load
                     return 1
                 fi
-                star_to_load="${1//\//"${_STAR_DIR_SEPARATOR}"}"
+                star_to_load="${1//\//${_STAR_DIR_SEPARATOR}}"
                 mode=LOAD
                 shift
                 ;;
@@ -230,8 +230,8 @@ star()
                     star-help --mode=rename
                     return 1
                 fi
-                rename_src="${1//\//"${_STAR_DIR_SEPARATOR}"}"
-                rename_dst="${2//\//"${_STAR_DIR_SEPARATOR}"}"
+                rename_src="${1//\//${_STAR_DIR_SEPARATOR}}"
+                rename_dst="${2//\//${_STAR_DIR_SEPARATOR}}"
                 break
                 ;;
             "rm"|"remove" )
@@ -240,7 +240,7 @@ star()
                     star-help --mode=remove
                     return 1
                 fi
-                stars_to_remove+=("${1//\//"${_STAR_DIR_SEPARATOR}"}")
+                stars_to_remove+=("${1//\//${_STAR_DIR_SEPARATOR}}")
                 mode=REMOVE
                 shift
                 ;;
@@ -272,7 +272,7 @@ star()
 
             if [[ ! "${star_to_store}" == "" ]]; then
                 # replace slashes by dir separator char: a star name can contain slashes
-                dst_name="${star_to_store//\//"${_STAR_DIR_SEPARATOR}"}"
+                dst_name="${star_to_store//\//${_STAR_DIR_SEPARATOR}}"
             else
                 # else get the star name from the name of the directory
                 dst_name=$(basename "${src_dir}")
@@ -288,7 +288,7 @@ star()
             if [[ "${stars_path[*]}" =~ (^|[[:space:]])${src_dir}($|[[:space:]]) ]]; then
                 # Find the star name for this directory's path
                 existing_star=$(star-list "${_STAR_HOME}/${_STAR_STARS_DIR}" --get-name="$src_dir")
-                existing_star_display=${existing_star//"${_STAR_DIR_SEPARATOR}"//}
+                existing_star_display="${existing_star//${_STAR_DIR_SEPARATOR}//}"
                 echo -e "Directory ${COLOR_PATH}${src_dir}${COLOR_RESET} is already starred as ${COLOR_STAR}${existing_star_display}${COLOR_RESET}."
                 return 2
             fi
@@ -312,7 +312,7 @@ star()
                 tmp_name=$(echo "${dst_name}" | tr --squeeze-repeats ' ' | tr ' ' '-')
 
                 while [[ -e ${_STAR_HOME}/${_STAR_STARS_DIR}/${tmp_name} ]]; do
-                    dst_name_slash=${dst_name//"${_STAR_DIR_SEPARATOR}"//}
+                    dst_name_slash="${dst_name//${_STAR_DIR_SEPARATOR}//}"
                     dst_basename=$(basename "${src_dir%%"$dst_name_slash"}")
 
                     if [[ "${dst_basename}" == "/" ]]; then
@@ -333,10 +333,10 @@ star()
                 # replace whitespaces with a single dash
                 dst_name=$( echo "${dst_name}" | tr --squeeze-repeats ' ' | tr ' ' '-')
 
-                dst_name_slash=${dst_name//"${_STAR_DIR_SEPARATOR}"//}
+                dst_name_slash="${dst_name//${_STAR_DIR_SEPARATOR}//}"
                 if [[ -e ${_STAR_HOME}/${_STAR_STARS_DIR}/${dst_name} ]]; then
                     # Get the path associated with star name
-                    target_path=$(star-list "${_STAR_HOME}/${_STAR_STARS_DIR}" --get-path="${dst_name//\//"${_STAR_DIR_SEPARATOR}"}")
+                    target_path=$(star-list "${_STAR_HOME}/${_STAR_STARS_DIR}" --get-path="${dst_name//\//${_STAR_DIR_SEPARATOR}}")
 
                     echo -e "A directory is already starred with the name \"${dst_name_slash}\": ${COLOR_STAR}${dst_name_slash}${COLOR_RESET} -> ${COLOR_PATH}${target_path}${COLOR_RESET}."
                     return 2
@@ -350,10 +350,10 @@ star()
 
             if ! ln -s "${src_dir}" "${_STAR_HOME}/${_STAR_STARS_DIR}/${dst_name}"; then
                 local res=$?
-                echo -e "Failed to add a new starred directory: ${COLOR_STAR}${dst_name//"${_STAR_DIR_SEPARATOR}"//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
+                echo -e "Failed to add a new starred directory: ${COLOR_STAR}${dst_name//${_STAR_DIR_SEPARATOR}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
                 return $res
             fi
-            echo -e "Added new starred directory: ${COLOR_STAR}${dst_name//"${_STAR_DIR_SEPARATOR}"//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
+            echo -e "Added new starred directory: ${COLOR_STAR}${dst_name//${_STAR_DIR_SEPARATOR}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
 
             # update environment variables
             _star_add_variable "${dst_name}" "${src_dir}"
@@ -413,7 +413,7 @@ star()
                 local stars_list_str
                 # TODO: pass sorting parameters to star-list
                 stars_list_str=$(star-list "${_STAR_HOME}/${_STAR_STARS_DIR}" --format="$DISPLAY_FORMAT")
-                echo "${stars_list_str//"${_STAR_DIR_SEPARATOR}"//}" | "${DISPLAY_COLUMN_COMMAND[@]}"
+                echo "${stars_list_str//${_STAR_DIR_SEPARATOR}//}" | "${DISPLAY_COLUMN_COMMAND[@]}"
             fi
             ;;
         RENAME)
@@ -429,10 +429,10 @@ star()
 
                 if ! mv "${_STAR_HOME}/${_STAR_STARS_DIR}/${rename_src}" "${_STAR_HOME}/${_STAR_STARS_DIR}/${rename_dst}"; then
                     local res=$?
-                    echo -e "Failed to rename star ${COLOR_STAR}${rename_src//"${_STAR_DIR_SEPARATOR}"//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//"${_STAR_DIR_SEPARATOR}"//}${COLOR_RESET}."
+                    echo -e "Failed to rename star ${COLOR_STAR}${rename_src//${_STAR_DIR_SEPARATOR}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${_STAR_DIR_SEPARATOR}//}${COLOR_RESET}."
                     return $res
                 fi
-                echo -e "Renamed star ${COLOR_STAR}${rename_src//"${_STAR_DIR_SEPARATOR}"//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//"${_STAR_DIR_SEPARATOR}"//}${COLOR_RESET}."
+                echo -e "Renamed star ${COLOR_STAR}${rename_src//${_STAR_DIR_SEPARATOR}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${_STAR_DIR_SEPARATOR}//}${COLOR_RESET}."
             else
                 echo -e "Star ${COLOR_STAR}${rename_src}${COLOR_RESET} does not exist."
             fi
@@ -453,12 +453,12 @@ star()
                 if [[ -e "${_STAR_HOME}/${_STAR_STARS_DIR}/${star}" ]]; then
                     if ! command rm "${_STAR_HOME}/${_STAR_STARS_DIR}/${star}"; then
                         local res=$?
-                        echo -e "Failed to remove starred directory: ${COLOR_STAR}${star//"${_STAR_DIR_SEPARATOR}"//}${COLOR_RESET}."
+                        echo -e "Failed to remove starred directory: ${COLOR_STAR}${star//${_STAR_DIR_SEPARATOR}//}${COLOR_RESET}."
                         return $res
                     fi
-                    echo -e "Removed starred directory: ${COLOR_STAR}${star//"${_STAR_DIR_SEPARATOR}"//}${COLOR_RESET}."
+                    echo -e "Removed starred directory: ${COLOR_STAR}${star//${_STAR_DIR_SEPARATOR}//}${COLOR_RESET}."
                 else
-                    echo -e "Couldn't find any starred directory with the name: ${COLOR_STAR}${star//"${_STAR_DIR_SEPARATOR}"//}${COLOR_RESET}."
+                    echo -e "Couldn't find any starred directory with the name: ${COLOR_STAR}${star//${_STAR_DIR_SEPARATOR}//}${COLOR_RESET}."
                 fi
             done
             # re create the other environment variables
@@ -547,14 +547,14 @@ star()
 #         || "${second_cw}" == "rm" \
 #     ]]; then
 #         # suggest all starred directories
-#         COMPREPLY=( $(compgen -W "${stars_list//"${_STAR_DIR_SEPARATOR}"/\/}" -- ${cur}) )
+#         COMPREPLY=( $(compgen -W "${stars_list//${_STAR_DIR_SEPARATOR}/\/}" -- ${cur}) )
 #         return 0
 #     fi
 
 #     case "${prev}" in
 #         load|l|sl|rename)
 #             # suggest all starred directories
-#             COMPREPLY=( $(compgen -W "${stars_list//"${_STAR_DIR_SEPARATOR}"/\/}" -- ${cur}) )
+#             COMPREPLY=( $(compgen -W "${stars_list//${_STAR_DIR_SEPARATOR}/\/}" -- ${cur}) )
 #             return 0
 #             ;;
 #         star)
