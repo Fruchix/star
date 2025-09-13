@@ -15,7 +15,7 @@ teardown() { teardown_tmpdir; }
   mkdir "$TEST_ROOT/foo_basename"
   run star add "$TEST_ROOT/foo_basename"
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/foo_basename" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/foo_basename" ]]
   [ "$(readlink -f "$_STAR_HOME/$_STAR_STARS_DIR/foo_basename")" = "$(realpath "$TEST_ROOT/foo_basename")" ]
 }
 
@@ -24,7 +24,7 @@ teardown() { teardown_tmpdir; }
   cd "$TEST_ROOT/foo_current"
   run star add .
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/foo_current" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/foo_current" ]]
   [ "$(readlink -f "$_STAR_HOME/$_STAR_STARS_DIR/foo_current")" = "$(realpath "$TEST_ROOT/foo_current")" ]
 }
 
@@ -32,47 +32,47 @@ teardown() { teardown_tmpdir; }
   mkdir "$TEST_ROOT/foo_slash"
   run star add "$TEST_ROOT/foo_slash" "slash/path"
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/slash${_STAR_DIR_SEPARATOR}path" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/slash${_STAR_DIR_SEPARATOR}path" ]]
 }
 
 @test "star add - using a star name with spaces is allowed (spaces are replaced by \"-\")" {
   mkdir "$TEST_ROOT/foo_space"
   run star add "$TEST_ROOT/foo_space" " my star "
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/-my-star-" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/-my-star-" ]]
 }
 
 @test "star add - multiple spaces in star name are replaced by one dash only" {
   mkdir "$TEST_ROOT/foo_multiple_spaces"
   run star add "$TEST_ROOT/foo_multiple_spaces" "   my    dir  "
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/-my-dir-" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/-my-dir-" ]]
 }
 
 @test "star add - adding star with a basename containing spaces is allowed" {
   mkdir "$TEST_ROOT/my dir"
   run star add "$TEST_ROOT/my dir"
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/my-dir" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/my-dir" ]]
 }
 
 @test "star add - using a star name with numbers is allowed" {
   mkdir "$TEST_ROOT/foo_number"
   run star add "$TEST_ROOT/foo_number" "abc123"
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/abc123" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/abc123" ]]
 
   mkdir "$TEST_ROOT/foo_basename_321"
   run star add "$TEST_ROOT/foo_basename_321"
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/foo_basename_321" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/foo_basename_321" ]]
 }
 
 @test "star add - adding star with a basename containing only numbers is allowed but it adds a dir- prefix" {
   mkdir "$TEST_ROOT/456"
   run star add "$TEST_ROOT/456"
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/dir-456" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/dir-456" ]]
 }
 
 @test "star add - cannot star a directory that does not exist" {
@@ -109,15 +109,15 @@ teardown() { teardown_tmpdir; }
   mkdir -p "$TEST_ROOT/foo/config" "$TEST_ROOT/bar/config"
   run star add "$TEST_ROOT/foo/config"
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/config" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/config" ]]
 
   run star add "$TEST_ROOT/bar/config"
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/bar${_STAR_DIR_SEPARATOR}config" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/bar${_STAR_DIR_SEPARATOR}config" ]]
 
   mkdir -p "$TEST_ROOT/foo/config/bar/config"
   run star add "$TEST_ROOT/foo/config/bar/config"
   [ "$status" -eq 0 ]
-  [ -L "$_STAR_HOME/$_STAR_STARS_DIR/config${_STAR_DIR_SEPARATOR}bar${_STAR_DIR_SEPARATOR}config" ]
+  [[ -L "$_STAR_HOME/$_STAR_STARS_DIR/config${_STAR_DIR_SEPARATOR}bar${_STAR_DIR_SEPARATOR}config" ]]
 }
 
