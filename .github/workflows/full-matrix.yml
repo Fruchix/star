@@ -1,0 +1,22 @@
+name: Full Matrix Workflow
+
+on:
+  push:
+    branches:
+      - "**"
+  pull_request:
+    branches:
+      - '**'
+  workflow_dispatch:
+
+
+jobs:
+  tests:
+    strategy:
+      # see all results even if one fails
+      fail-fast: false
+      matrix:
+        shell: ["bash:3.2", "bash:4.0", "bash:5.2", "zshusers/zsh:latest"]
+    uses: ./.github/workflows/common.yml
+    with:
+      shell: ${{ matrix.shell }}

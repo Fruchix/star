@@ -1,0 +1,59 @@
+name: Common Workflow
+
+on:
+  workflow_call:
+    inputs:
+      shell:
+        required: true
+        type: string
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    container:
+      image: ${{ inputs.shell }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install bats
+        run: |
+          git clone https://github.com/bats-core/bats-core.git
+          ./bats-core/install.sh /usr/local
+
+      - name: Core tests
+        run: |
+          case "${{ inputs.shell }}" in
+            bash3|bash4|bash5) SHELL_PATH="/usr/local/bin/bash" ;;
+            zsh) SHELL_PATH="/usr/bin/zsh" ;;
+          esac
+          echo "Running with $SHELL_PATH"
+          TEST_SHELL="$SHELL_PATH" bats tests/core
+
+      - name: Integration tests
+        run: |
+          case "${{ inputs.shell }}" in
+            bash3|bash4|bash5) SHELL_PATH="/usr/local/bin/bash" ;;
+            zsh) SHELL_PATH="/usr/bin/zsh" ;;
+          esac
+          echo "Running with $SHELL_PATH"
+          TEST_SHELL="$SHELL_PATH" bats tests/integration
+
+      - name: Environment variables tests
+        run: |
+          case "${{ inputs.shell }}" in
+            bash3|bash4|bash5) SHELL_PATH="/usr/local/bin/bash" ;;
+            zsh) SHELL_PATH="/usr/bin/zsh" ;;
+          esac
+          echo "Running with $SHELL_PATH"
+          TEST_SHELL="$SHELL_PATH" bats tests/envvars
+
+      - name: Performance tests
+        run: |
+          case "${{ inputs.shell }}" in
+            bash3|bash4|bash5) SHELL_PATH="/usr/local/bin/bash" ;;
+            zsh) SHELL_PATH="/usr/bin/zsh" ;;
+          esac
+          echo "Running with $SHELL_PATH"
+          TEST_SHELL="$SHELL_PATH" bats tests/perf
