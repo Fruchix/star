@@ -30,7 +30,11 @@ jobs:
             zsh) SHELL_PATH="/usr/bin/zsh" ;;
           esac
           echo "Running with $SHELL_PATH"
-          $SHELL_PATH --version
+        
+          bash --version
+          which bash
+          sh --version
+          which sh
           TEST_SHELL="$SHELL_PATH" bats tests/core
 
       - name: Integration tests
