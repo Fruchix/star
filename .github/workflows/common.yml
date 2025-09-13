@@ -20,8 +20,8 @@ jobs:
       - name: Install bats
         run: |
           case "${{ inputs.shell }}" in
-            "bash:"*) apk add --no-cache git findutils util-linux coreutils tree ;;
-            zsh) install_packages git findutils util-linux coreutils tree ;;
+            "bash"*) apk add --no-cache git findutils util-linux coreutils tree ;;
+            *"zsh"*) install_packages git findutils util-linux coreutils tree ;;
           esac
           
           git clone https://github.com/bats-core/bats-core.git
@@ -30,8 +30,8 @@ jobs:
       - name: Core tests
         run: |
           case "${{ inputs.shell }}" in
-            "bash:"*) SHELL_PATH="/usr/local/bin/bash" ;;
-            zsh) SHELL_PATH="/usr/bin/zsh" ;;
+            "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
+            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
           esac
           echo "Running with $SHELL_PATH"
           TEST_SHELL="$SHELL_PATH" bats tests/core
@@ -40,8 +40,8 @@ jobs:
         if: always()
         run: |
           case "${{ inputs.shell }}" in
-            bash3|bash4|bash5) SHELL_PATH="/usr/local/bin/bash" ;;
-            zsh) SHELL_PATH="/usr/bin/zsh" ;;
+            "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
+            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
           esac
           echo "Running with $SHELL_PATH"
           TEST_SHELL="$SHELL_PATH" bats tests/integration
@@ -50,8 +50,8 @@ jobs:
         if: always()
         run: |
           case "${{ inputs.shell }}" in
-            bash3|bash4|bash5) SHELL_PATH="/usr/local/bin/bash" ;;
-            zsh) SHELL_PATH="/usr/bin/zsh" ;;
+            "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
+            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
           esac
           echo "Running with $SHELL_PATH"
           TEST_SHELL="$SHELL_PATH" bats tests/envvars
@@ -60,8 +60,8 @@ jobs:
         if: always()
         run: |
           case "${{ inputs.shell }}" in
-            bash3|bash4|bash5) SHELL_PATH="/usr/local/bin/bash" ;;
-            zsh) SHELL_PATH="/usr/bin/zsh" ;;
+            "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
+            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
           esac
           echo "Running with $SHELL_PATH"
           TEST_SHELL="$SHELL_PATH" bats tests/perf
