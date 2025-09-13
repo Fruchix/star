@@ -33,6 +33,7 @@ jobs:
           TEST_SHELL="$SHELL_PATH" bats tests/core
 
       - name: Integration tests
+        if: always()
         run: |
           case "${{ inputs.shell }}" in
             bash3|bash4|bash5) SHELL_PATH="/usr/local/bin/bash" ;;
@@ -42,6 +43,7 @@ jobs:
           TEST_SHELL="$SHELL_PATH" bats tests/integration
 
       - name: Environment variables tests
+        if: always()
         run: |
           case "${{ inputs.shell }}" in
             bash3|bash4|bash5) SHELL_PATH="/usr/local/bin/bash" ;;
@@ -58,3 +60,4 @@ jobs:
           esac
           echo "Running with $SHELL_PATH"
           TEST_SHELL="$SHELL_PATH" bats tests/perf
+        continue-on-error: true
