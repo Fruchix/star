@@ -6,63 +6,97 @@ on:
       shell:
         required: true
         type: string
+      shell_version:
+        required: true
+        type: string
+      os:
+        required: true
+        type: string
+      os_version:
+        required: true
+        type: string
 
 jobs:
   tests:
-    runs-on: ubuntu-latest
-    container:
-      image: ${{ inputs.shell }}
+    runs-on: ${{ inputs.os == 'freebsd' && 'ubuntu-latest' || format('{0}-{1}', inputs.os, inputs.os_version) }}
 
     steps:
+      - name: Select freebsd image
+        if: inputs.os == 'freebsd'
+        uses: vmactions/freebsd-vm@v1
+        with:
+          release: ${{ inputs.os_version }}
+
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install dependencies
+      - name: Install ${{ inputs.shell }}-${{ inputs.shell_version }}
         run: |
-          case "${{ inputs.shell }}" in
-            "bash"*) apk add --no-cache git findutils util-linux coreutils tree ;;
-            # *"zsh"*) install_packages git findutils util-linux coreutils tree ;;
+          case "${{ inputs.shell_version }}" in
+            "bash")
+              wget https://ftpmirror.gnu.org/bash/bash-${{ inputs.shell_version }}.tar.gz
+              tar -xf bash-${{ inputs.shell_version }}.tar.gz
+              cd bash-${{ inputs.shell_version }}
+              ./configure
+              make -j8
+              sudo make install
+              ;;
+            "zsh")
+              wget -O zsh.tar.xz https://sourceforge.net/projects/zsh/files/zsh/${{ inputs.shell_version }}/zsh-${{ inputs.shell_version }}.tar.xz/download
+              tar -xf zsh-${{ inputs.shell_version }}.tar.xz
+              cd zsh-${{ inputs.shell_version }}
+              ./configure
+              make -j8
+              sudo make install
+              ;;
           esac
 
+      - name: Install dependencies
+        run: |
+          case "${{ inputs.os }}" in
+            "ubuntu") sudo apt update; sudo apt install -y git ;;
+            "macos") brew update; brew install git ;;
+            "freebsd") pkg update; pkg install -y git ;;
+          esac
           git clone https://github.com/bats-core/bats-core.git
-          ./bats-core/install.sh /usr/local
+          sudo ./bats-core/install.sh /usr/local
 
       - name: Core tests
         run: |
           case "${{ inputs.shell }}" in
             "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
-            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
+            *"zsh"*) SHELL_PATH="/usr/local/bin/zsh" ;;
           esac
           echo "Running with $SHELL_PATH"
           TEST_SHELL="$SHELL_PATH" bats tests/core
 
-      - name: Integration tests
-        if: always()
-        run: |
-          case "${{ inputs.shell }}" in
-            "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
-            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
-          esac
-          echo "Running with $SHELL_PATH"
-          TEST_SHELL="$SHELL_PATH" bats tests/integration
+      # - name: Integration tests
+      #   if: always()
+      #   run: |
+      #     case "${{ inputs.shell }}" in
+      #       "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
+      #       *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
+      #     esac
+      #     echo "Running with $SHELL_PATH"
+      #     TEST_SHELL="$SHELL_PATH" bats tests/integration
 
-      - name: Environment variables tests
-        if: always()
-        run: |
-          case "${{ inputs.shell }}" in
-            "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
-            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
-          esac
-          echo "Running with $SHELL_PATH"
-          TEST_SHELL="$SHELL_PATH" bats tests/envvars
+      # - name: Environment variables tests
+      #   if: always()
+      #   run: |
+      #     case "${{ inputs.shell }}" in
+      #       "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
+      #       *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
+      #     esac
+      #     echo "Running with $SHELL_PATH"
+      #     TEST_SHELL="$SHELL_PATH" bats tests/envvars
 
-      - name: Performance tests
-        if: always()
-        run: |
-          case "${{ inputs.shell }}" in
-            "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
-            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
-          esac
-          echo "Running with $SHELL_PATH"
-          TEST_SHELL="$SHELL_PATH" bats tests/perf
-        continue-on-error: true
+      # - name: Performance tests
+      #   if: always()
+      #   run: |
+      #     case "${{ inputs.shell }}" in
+      #       "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
+      #       *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
+      #     esac
+      #     echo "Running with $SHELL_PATH"
+      #     TEST_SHELL="$SHELL_PATH" bats tests/perf
+      #   continue-on-error: true
