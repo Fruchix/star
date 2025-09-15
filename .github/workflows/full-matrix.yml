@@ -17,6 +17,7 @@ jobs:
       matrix:
         os: ["ubuntu", "macos", "freebsd"]
         shell: ["bash", "zsh"]
+        shell_version: [3.2, 4.0, 5.2, 5.9]
         include:
           - os: "ubuntu"
             os_version: "24.04"

@@ -26,6 +26,9 @@ jobs:
         uses: vmactions/freebsd-vm@v1
         with:
           release: ${{ inputs.os_version }}
+          prepare: |
+            pkg install -y git tree
+
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -54,9 +57,9 @@ jobs:
       - name: Install dependencies
         run: |
           case "${{ inputs.os }}" in
-            "ubuntu") sudo apt update; sudo apt install -y git ;;
-            "macos") brew update; brew install git ;;
-            "freebsd") pkg update; pkg install -y git ;;
+            "ubuntu") sudo apt update; sudo apt install -y git tree ;;
+            "macos") brew update; brew install git tree ;;
+            "freebsd") ;;
           esac
           git clone https://github.com/bats-core/bats-core.git
           sudo ./bats-core/install.sh /usr/local
