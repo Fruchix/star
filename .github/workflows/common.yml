@@ -35,7 +35,7 @@ jobs:
 
       - name: Install ${{ inputs.shell }}-${{ inputs.shell_version }}
         run: |
-          case "${{ inputs.shell_version }}" in
+          case "${{ inputs.shell }}" in
             "bash")
               wget https://ftpmirror.gnu.org/bash/bash-${{ inputs.shell_version }}.tar.gz
               tar -xf bash-${{ inputs.shell_version }}.tar.gz
