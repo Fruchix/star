@@ -45,7 +45,7 @@ jobs:
               sudo make install
               ;;
             "zsh")
-              wget -O zsh.tar.xz https://sourceforge.net/projects/zsh/files/zsh/${{ inputs.shell_version }}/zsh-${{ inputs.shell_version }}.tar.xz/download
+              wget https://sourceforge.net/projects/zsh/files/zsh/${{ inputs.shell_version }}/zsh-${{ inputs.shell_version }}.tar.xz/download
               tar -xf zsh-${{ inputs.shell_version }}.tar.xz
               cd zsh-${{ inputs.shell_version }}
               ./configure
