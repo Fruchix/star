@@ -25,14 +25,15 @@ jobs:
             os_version: "15"
           - os: "freebsd"
             os_version: "14.1"
-          - shell: "bash"
-            shell_version: "5.2"
-          - shell: "bash"
-            shell_version: "4.0"
-          - shell: "bash"
-            shell_version: "3.2"
-          - shell: "zsh"
-            shell_version: "5.9"
+        exclude:
+          - shell: bash
+            shell_version: 5.9
+          - shell: zsh
+            shell_version: 3.2
+          - shell: zsh
+            shell_version: 4.0
+          - shell: zsh
+            shell_version: 5.2
     uses: ./.github/workflows/common.yml
     with:
       shell: ${{ matrix.shell }}
