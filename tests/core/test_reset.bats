@@ -2,8 +2,8 @@
 
 load ../helpers/helper_setup
 
-setup() { setup_tmpdir; }
-teardown() { teardown_tmpdir; }
+setup() { setup_common; }
+teardown() { teardown_common; }
 
 @test "star reset - reset removes all bookmarks" {
   skip "not implemented yet"

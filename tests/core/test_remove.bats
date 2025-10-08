@@ -2,8 +2,8 @@
 
 load ../helpers/helper_setup
 
-setup() { setup_tmpdir; }
-teardown() { teardown_tmpdir; }
+setup() { setup_common; }
+teardown() { teardown_common; }
 
 @test "star remove - remove deletes a bookmark" {
   skip "not implemented yet"

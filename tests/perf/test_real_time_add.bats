@@ -4,8 +4,8 @@ load ../helpers/helper_setup
 load ../helpers/helper_measure
 load ../helpers/constants
 
-setup() { setup_tmpdir; }
-teardown() { teardown_tmpdir; }
+setup() { setup_common; }
+teardown() { teardown_common; }
 
 @test "star add - adding 5 bookmarks one after the other" {
     mkdir "$TEST_ROOT/d"{1..5}

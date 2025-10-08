@@ -360,7 +360,7 @@ star()
             ;;
         LOAD)
             if [[ ! -d "${_STAR_HOME}/${_STAR_STARS_DIR}" ]]; then
-                echo "No star can be loaded because there is no starred directory."
+                echo "No star can be loaded because there are no starred directories."
                 return 0
             fi
 
@@ -374,7 +374,7 @@ star()
 
                 # Check if the index is valid
                 if [[ "${star_to_load}" -lt 1 || "${star_to_load}" -gt "${#stars_list[@]}" ]]; then
-                    echo -e "Invalid star index: ${COLOR_STAR}${star_to_load}${COLOR_RESET}. Valid range is 1-${#stars_list[@]}."
+                    echo -e "Invalid index: ${COLOR_STAR}${star_to_load}${COLOR_RESET}. Valid range is 1-${#stars_list[@]}."
                     return 2
                 fi
 

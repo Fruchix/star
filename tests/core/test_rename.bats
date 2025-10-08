@@ -2,8 +2,8 @@
 
 load ../helpers/helper_setup
 
-setup() { setup_tmpdir; }
-teardown() { teardown_tmpdir; }
+setup() { setup_common; }
+teardown() { teardown_common; }
 
 @test "star rename - rename works with new unique name" {
   skip "not implemented yet"
