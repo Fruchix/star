@@ -73,33 +73,33 @@ jobs:
           echo "Running with $SHELL_PATH"
           TEST_SHELL="$SHELL_PATH" bats tests/core
 
-      # - name: Integration tests
-      #   if: always()
-      #   run: |
-      #     case "${{ inputs.shell }}" in
-      #       "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
-      #       *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
-      #     esac
-      #     echo "Running with $SHELL_PATH"
-      #     TEST_SHELL="$SHELL_PATH" bats tests/integration
+      - name: Integration tests
+        if: always()
+        run: |
+          case "${{ inputs.shell }}" in
+            "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
+            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
+          esac
+          echo "Running with $SHELL_PATH"
+          TEST_SHELL="$SHELL_PATH" bats tests/integration
 
-      # - name: Environment variables tests
-      #   if: always()
-      #   run: |
-      #     case "${{ inputs.shell }}" in
-      #       "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
-      #       *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
-      #     esac
-      #     echo "Running with $SHELL_PATH"
-      #     TEST_SHELL="$SHELL_PATH" bats tests/envvars
+      - name: Environment variables tests
+        if: always()
+        run: |
+          case "${{ inputs.shell }}" in
+            "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
+            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
+          esac
+          echo "Running with $SHELL_PATH"
+          TEST_SHELL="$SHELL_PATH" bats tests/envvars
 
-      # - name: Performance tests
-      #   if: always()
-      #   run: |
-      #     case "${{ inputs.shell }}" in
-      #       "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
-      #       *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
-      #     esac
-      #     echo "Running with $SHELL_PATH"
-      #     TEST_SHELL="$SHELL_PATH" bats tests/perf
-      #   continue-on-error: true
+      - name: Performance tests
+        if: always()
+        run: |
+          case "${{ inputs.shell }}" in
+            "bash"*) SHELL_PATH="/usr/local/bin/bash" ;;
+            *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
+          esac
+          echo "Running with $SHELL_PATH"
+          TEST_SHELL="$SHELL_PATH" bats tests/perf
+        continue-on-error: true
