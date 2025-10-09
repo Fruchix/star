@@ -33,7 +33,7 @@ jobs:
           ./bats-core/install.sh /usr/local
 
       - name: Core tests
-        if: ${{ steps.setup.outcome == 'success' }}
+        if: ${{ steps.setup.outcome == 'success' && always() }}
         run: |
           SHELL_PATH="/usr/local/bin/bash"
           echo "Running with $SHELL_PATH"
@@ -41,7 +41,7 @@ jobs:
           TEST_SHELL="$SHELL_PATH" bats tests/core
 
       - name: Integration tests
-        if: ${{ steps.setup.outcome == 'success' }}
+        if: ${{ steps.setup.outcome == 'success' && always() }}
         run: |
           SHELL_PATH="/usr/local/bin/bash"
           echo "Running with $SHELL_PATH"
@@ -49,7 +49,7 @@ jobs:
           TEST_SHELL="$SHELL_PATH" bats tests/integration
 
       - name: Environment variables tests
-        if: ${{ steps.setup.outcome == 'success' }}
+        if: ${{ steps.setup.outcome == 'success' && always() }}
         run: |
           SHELL_PATH="/usr/local/bin/bash"
           echo "Running with $SHELL_PATH"
@@ -57,7 +57,7 @@ jobs:
           TEST_SHELL="$SHELL_PATH" bats tests/envvars
 
       - name: Performance tests
-        if: ${{ steps.setup.outcome == 'success' }}
+        if: ${{ steps.setup.outcome == 'success' && always() }}
         run: |
           SHELL_PATH="/usr/local/bin/bash"
           echo "Running with $SHELL_PATH"
