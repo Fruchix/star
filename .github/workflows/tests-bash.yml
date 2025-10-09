@@ -18,7 +18,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        bash_version: [3.2, 4.0, 5.2]
+        bash_version: ["3.2", "4.0", "5.2"]
 
     steps:
       - name: Checkout code
