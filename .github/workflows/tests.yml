@@ -19,4 +19,4 @@ jobs:
     with:
       shell: ${{ matrix.shell }}
       os: ubuntu
-      os_version: 24.04
+      os_version: 22.04
