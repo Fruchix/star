@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  tests:
+  bash-tests:
     runs-on: ubuntu-latest
     container:
       image: bash:${{ matrix.bash_version }}
