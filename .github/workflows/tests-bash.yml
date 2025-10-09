@@ -30,7 +30,7 @@ jobs:
           apk add --no-cache git findutils util-linux coreutils tree
 
           git clone https://github.com/bats-core/bats-core.git
-          qsdqs ./bats-core/install.sh /usr/local
+          ./bats-core/install.sh /usr/local
 
       - name: Core tests
         if: ${{ steps.setup.outcome == 'success' && always() }}
