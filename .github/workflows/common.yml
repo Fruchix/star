@@ -45,8 +45,8 @@ jobs:
               make -j8
               sudo make install
               ;;
-            "zsh-"*)
-              wget https://sourceforge.net/projects/zsh/files/zsh/${shell_version}/zsh-${shell_version}.tar.xz/download
+            "zsh")
+              wget -O zsh-${shell_version}.tar.xz https://sourceforge.net/projects/zsh/files/zsh/${shell_version}/zsh-${shell_version}.tar.xz/download
               tar -xf zsh-${shell_version}.tar.xz
               cd zsh-${shell_version}
               ./configure
