@@ -38,20 +38,30 @@ jobs:
 
           case "$shell_name" in
             "bash")
-              wget https://ftpmirror.gnu.org/bash/bash-${shell_version}.tar.gz
-              tar -xf bash-${shell_version}.tar.gz
-              cd bash-${shell_version}
-              ./configure
-              make -j8
-              sudo make install
+              if [[ ${{ inputs.os }} == 'ubuntu' ]]; then
+                sudo apt update
+                sudo apt install -y bash=${shell_version}
+              else
+                wget https://ftpmirror.gnu.org/bash/bash-${shell_version}.tar.gz
+                tar -xf bash-${shell_version}.tar.gz
+                cd bash-${shell_version}
+                ./configure
+                make -j8
+                sudo make install
+              fi
               ;;
             "zsh")
-              wget -O zsh-${shell_version}.tar.xz https://sourceforge.net/projects/zsh/files/zsh/${shell_version}/zsh-${shell_version}.tar.xz/download
-              tar -xf zsh-${shell_version}.tar.xz
-              cd zsh-${shell_version}
-              ./configure
-              make -j8
-              sudo make install
+              if [[ ${{ inputs.os }} == 'ubuntu' ]]; then
+                sudo apt update
+                sudo apt install -y zsh=${shell_version}
+              else
+                wget -O zsh-${shell_version}.tar.xz https://sourceforge.net/projects/zsh/files/zsh/${shell_version}/zsh-${shell_version}.tar.xz/download
+                tar -xf zsh-${shell_version}.tar.xz
+                cd zsh-${shell_version}
+                ./configure
+                make -j8
+                sudo make install
+              fi
               ;;
           esac
 
