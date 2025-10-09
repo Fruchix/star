@@ -72,6 +72,7 @@ jobs:
             *"zsh"*) SHELL_PATH="/usr/local/bin/zsh" ;;
           esac
           echo "Running with $SHELL_PATH"
+          $SHELL_PATH --version
           TEST_SHELL="$SHELL_PATH" bats tests/core
 
       - name: Integration tests
@@ -82,6 +83,7 @@ jobs:
             *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
           esac
           echo "Running with $SHELL_PATH"
+          $SHELL_PATH --version
           TEST_SHELL="$SHELL_PATH" bats tests/integration
 
       - name: Environment variables tests
@@ -92,6 +94,7 @@ jobs:
             *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
           esac
           echo "Running with $SHELL_PATH"
+          $SHELL_PATH --version
           TEST_SHELL="$SHELL_PATH" bats tests/envvars
 
       - name: Performance tests
@@ -102,5 +105,6 @@ jobs:
             *"zsh"*) SHELL_PATH="/usr/bin/zsh" ;;
           esac
           echo "Running with $SHELL_PATH"
+          $SHELL_PATH --version
           TEST_SHELL="$SHELL_PATH" bats tests/perf
         continue-on-error: true
