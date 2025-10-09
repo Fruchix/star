@@ -14,20 +14,9 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        shell: ["bash", "zsh"]
-        shell_version: [3.2, 4.0, 5.2, 5.9]
-        exclude:
-          - shell: bash
-            shell_version: 5.9
-          - shell: zsh
-            shell_version: 3.2
-          - shell: zsh
-            shell_version: 4.0
-          - shell: zsh
-            shell_version: 5.2
+        shell: ["bash-3.2", "bash-4.0", "bash-5.2", "zsh-5.9"]
     uses: ./.github/workflows/common.yml
     with:
       shell: ${{ matrix.shell }}
-      shell_version: ${{ matrix.shell_version }}
       os: ubuntu
       os_version: 24.04

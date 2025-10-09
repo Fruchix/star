@@ -6,9 +6,6 @@ on:
       shell:
         required: true
         type: string
-      shell_version:
-        required: true
-        type: string
       os:
         required: true
         type: string
@@ -33,21 +30,25 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install ${{ inputs.shell }}-${{ inputs.shell_version }}
+      - name: Install ${{ inputs.shell }}
         run: |
-          case "${{ inputs.shell }}" in
+          shell="${{ inputs.shell }}"
+          shell_name="${shell%%-*}"
+          shell_version="${shell#*-}"
+
+          case "$shell_name" in
             "bash")
-              wget https://ftpmirror.gnu.org/bash/bash-${{ inputs.shell_version }}.tar.gz
-              tar -xf bash-${{ inputs.shell_version }}.tar.gz
-              cd bash-${{ inputs.shell_version }}
+              wget https://ftpmirror.gnu.org/bash/bash-${shell_version}.tar.gz
+              tar -xf bash-${shell_version}.tar.gz
+              cd bash-${shell_version}
               ./configure
               make -j8
               sudo make install
               ;;
-            "zsh")
-              wget https://sourceforge.net/projects/zsh/files/zsh/${{ inputs.shell_version }}/zsh-${{ inputs.shell_version }}.tar.xz/download
-              tar -xf zsh-${{ inputs.shell_version }}.tar.xz
-              cd zsh-${{ inputs.shell_version }}
+            "zsh-"*)
+              wget https://sourceforge.net/projects/zsh/files/zsh/${shell_version}/zsh-${shell_version}.tar.xz/download
+              tar -xf zsh-${shell_version}.tar.xz
+              cd zsh-${shell_version}
               ./configure
               make -j8
               sudo make install
