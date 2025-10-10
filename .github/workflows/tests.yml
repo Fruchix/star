@@ -78,6 +78,7 @@ jobs:
         uses: actions/checkout@v4
 
       - name: Install zsh-${{ matrix.zsh_version }}
+        shell: 'script -q -e -c "bash {0}"' # trick to run as tty
         run: |
           zsh_version="${{ matrix.zsh_version }}"
           wget -O zsh-${zsh_version}.tar.xz https://sourceforge.net/projects/zsh/files/zsh/${zsh_version}/zsh-${zsh_version}.tar.xz/download
