@@ -108,7 +108,7 @@ jobs:
       - name: Integration tests
         if: ${{ steps.setup.outcome == 'success' && always() }}
         run: |
-          SHELL_PATH="/usr/local/bin/bash"
+          SHELL_PATH="/usr/local/bin/zsh"
           echo "Running with $SHELL_PATH"
           $SHELL_PATH --version
           TEST_SHELL="$SHELL_PATH" bats tests/integration
@@ -116,7 +116,7 @@ jobs:
       - name: Environment variables tests
         if: ${{ steps.setup.outcome == 'success' && always() }}
         run: |
-          SHELL_PATH="/usr/local/bin/bash"
+          SHELL_PATH="/usr/local/bin/zsh"
           echo "Running with $SHELL_PATH"
           $SHELL_PATH --version
           TEST_SHELL="$SHELL_PATH" bats tests/envvars
@@ -124,7 +124,7 @@ jobs:
       - name: Performance tests
         if: ${{ steps.setup.outcome == 'success' && always() }}
         run: |
-          SHELL_PATH="/usr/local/bin/bash"
+          SHELL_PATH="/usr/local/bin/zsh"
           echo "Running with $SHELL_PATH"
           $SHELL_PATH --version
           TEST_SHELL="$SHELL_PATH" bats tests/perf
