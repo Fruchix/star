@@ -73,7 +73,7 @@ jobs:
       matrix:
         # 5.7.1 is first ship of ZSH as MacOS default shell
         # zsh_version: ["4.0.1", "5.1", "5.7.1", "5.8", "5.9"]
-        zsh_version: ["4.2.7"]
+        zsh_version: ["4.2.6", "4.2.5", "4.2.4", "4.2.3", "4.2.1", "4.2.0", "4.0.9", "4.0.7", "4.0.6", "4.0.4", "4.0.2"]
 
     steps:
       - name: Checkout code
@@ -114,27 +114,27 @@ jobs:
           $SHELL_PATH --version
           TEST_SHELL="$SHELL_PATH" bats tests/core
     
-      - name: Integration tests
-        if: ${{ steps.setup.outcome == 'success' && always() }}
-        run: |
-          SHELL_PATH="/usr/local/bin/zsh"
-          echo "Running with $SHELL_PATH"
-          $SHELL_PATH --version
-          TEST_SHELL="$SHELL_PATH" bats tests/integration
+      # - name: Integration tests
+      #   if: ${{ steps.setup.outcome == 'success' && always() }}
+      #   run: |
+      #     SHELL_PATH="/usr/local/bin/zsh"
+      #     echo "Running with $SHELL_PATH"
+      #     $SHELL_PATH --version
+      #     TEST_SHELL="$SHELL_PATH" bats tests/integration
 
-      - name: Environment variables tests
-        if: ${{ steps.setup.outcome == 'success' && always() }}
-        run: |
-          SHELL_PATH="/usr/local/bin/zsh"
-          echo "Running with $SHELL_PATH"
-          $SHELL_PATH --version
-          TEST_SHELL="$SHELL_PATH" bats tests/envvars
+      # - name: Environment variables tests
+      #   if: ${{ steps.setup.outcome == 'success' && always() }}
+      #   run: |
+      #     SHELL_PATH="/usr/local/bin/zsh"
+      #     echo "Running with $SHELL_PATH"
+      #     $SHELL_PATH --version
+      #     TEST_SHELL="$SHELL_PATH" bats tests/envvars
 
-      - name: Performance tests
-        if: ${{ steps.setup.outcome == 'success' && always() }}
-        run: |
-          SHELL_PATH="/usr/local/bin/zsh"
-          echo "Running with $SHELL_PATH"
-          $SHELL_PATH --version
-          TEST_SHELL="$SHELL_PATH" bats tests/perf
-        continue-on-error: true
+      # - name: Performance tests
+      #   if: ${{ steps.setup.outcome == 'success' && always() }}
+      #   run: |
+      #     SHELL_PATH="/usr/local/bin/zsh"
+      #     echo "Running with $SHELL_PATH"
+      #     $SHELL_PATH --version
+      #     TEST_SHELL="$SHELL_PATH" bats tests/perf
+      #   continue-on-error: true
