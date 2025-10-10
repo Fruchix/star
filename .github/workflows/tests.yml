@@ -95,7 +95,7 @@ jobs:
           sudo apt install tree -y
 
           git clone https://github.com/bats-core/bats-core.git
-          ./bats-core/install.sh /usr/local
+          sudo ./bats-core/install.sh /usr/local
 
       - name: Core tests
         if: ${{ steps.setup.outcome == 'success' && always() }}
