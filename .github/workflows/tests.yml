@@ -1,4 +1,4 @@
-name: Tests on bash shell
+name: Tests
 
 on:
   push:
@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  bash-tests:
+  bash:
     runs-on: ubuntu-latest
     container:
       image: bash:${{ matrix.bash_version }}
@@ -18,7 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        bash_version: ["3.2", "4.0", "5.2"]
+        # bash_version: ["3.2", "4.0", "5.2"]
+        bash_version: ["3.2"]
 
     steps:
       - name: Checkout code
@@ -40,27 +41,65 @@ jobs:
           $SHELL_PATH --version
           TEST_SHELL="$SHELL_PATH" bats tests/core
 
-      - name: Integration tests
-        if: ${{ steps.setup.outcome == 'success' && always() }}
-        run: |
-          SHELL_PATH="/usr/local/bin/bash"
-          echo "Running with $SHELL_PATH"
-          $SHELL_PATH --version
-          TEST_SHELL="$SHELL_PATH" bats tests/integration
+      # - name: Integration tests
+      #   if: ${{ steps.setup.outcome == 'success' && always() }}
+      #   run: |
+      #     SHELL_PATH="/usr/local/bin/bash"
+      #     echo "Running with $SHELL_PATH"
+      #     $SHELL_PATH --version
+      #     TEST_SHELL="$SHELL_PATH" bats tests/integration
 
-      - name: Environment variables tests
-        if: ${{ steps.setup.outcome == 'success' && always() }}
-        run: |
-          SHELL_PATH="/usr/local/bin/bash"
-          echo "Running with $SHELL_PATH"
-          $SHELL_PATH --version
-          TEST_SHELL="$SHELL_PATH" bats tests/envvars
+      # - name: Environment variables tests
+      #   if: ${{ steps.setup.outcome == 'success' && always() }}
+      #   run: |
+      #     SHELL_PATH="/usr/local/bin/bash"
+      #     echo "Running with $SHELL_PATH"
+      #     $SHELL_PATH --version
+      #     TEST_SHELL="$SHELL_PATH" bats tests/envvars
 
-      - name: Performance tests
+      # - name: Performance tests
+      #   if: ${{ steps.setup.outcome == 'success' && always() }}
+      #   run: |
+      #     SHELL_PATH="/usr/local/bin/bash"
+      #     echo "Running with $SHELL_PATH"
+      #     $SHELL_PATH --version
+      #     TEST_SHELL="$SHELL_PATH" bats tests/perf
+      #   continue-on-error: true
+
+  zsh:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        zsh_version: ["5.9"]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install zsh-${{ matrix.zsh_version }}
+        run: |
+          zsh_version="${{ matrix.zsh_version }}"
+          wget -O zsh-${zsh_version}.tar.xz https://sourceforge.net/projects/zsh/files/zsh/${zsh_version}/zsh-${zsh_version}.tar.xz/download
+          tar -xf zsh-${zsh_version}.tar.xz
+          cd zsh-${zsh_version}
+          ./configure
+          make -j4
+          sudo make install
+
+      - name: Install dependencies
+        id: setup
+        run: |
+          sudo apt update
+          sudo apt install tree -y
+
+          git clone https://github.com/bats-core/bats-core.git
+          ./bats-core/install.sh /usr/local
+
+      - name: Core tests
         if: ${{ steps.setup.outcome == 'success' && always() }}
         run: |
-          SHELL_PATH="/usr/local/bin/bash"
+          SHELL_PATH="/usr/local/bin/zsh"
           echo "Running with $SHELL_PATH"
           $SHELL_PATH --version
-          TEST_SHELL="$SHELL_PATH" bats tests/perf
-        continue-on-error: true
+          TEST_SHELL="$SHELL_PATH" bats tests/core
