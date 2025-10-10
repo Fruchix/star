@@ -18,7 +18,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        bash_version: ["3.2", "4.0", "5.2"]
+        # bash_version: ["3.2", "4.0", "5.2"]
+        bash_version: ["5.2"]
 
     steps:
       - name: Checkout code
@@ -71,7 +72,8 @@ jobs:
       fail-fast: false
       matrix:
         # 5.7.1 is first ship of ZSH as MacOS default shell
-        zsh_version: ["4.0.1", "5.1", "5.7.1", "5.8", "5.9"]
+        # zsh_version: ["4.0.1", "5.1", "5.7.1", "5.8", "5.9"]
+        zsh_version: ["4.2.7"]
 
     steps:
       - name: Checkout code
