@@ -81,8 +81,15 @@ jobs:
         shell: 'script -q -e -c "bash {0}"' # trick to run as tty
         run: |
           zsh_version="${{ matrix.zsh_version }}"
-          wget -O zsh-${zsh_version}.tar.xz https://sourceforge.net/projects/zsh/files/zsh/${zsh_version}/zsh-${zsh_version}.tar.xz/download
-          tar -xf zsh-${zsh_version}.tar.xz
+          # if zsh >= 5.0.8 then the archive has format .tar.xz
+          # else the archive has format .tar.gz
+          if [[ "$(echo -e "${zsh_version}\n5.0.8" | sort | head -n 1)" == "5.0.8" ]]; then
+            wget -O zsh-${zsh_version}.tar.xz https://sourceforge.net/projects/zsh/files/zsh/${zsh_version}/zsh-${zsh_version}.tar.xz/download
+            tar -xf zsh-${zsh_version}.tar.xz
+          else
+            wget -O zsh-${zsh_version}.tar.gz https://sourceforge.net/projects/zsh/files/zsh/${zsh_version}/zsh-${zsh_version}.tar.gz/download
+            tar -xzf zsh-${zsh_version}.tar.gz
+          fi
           cd zsh-${zsh_version}
           ./configure
           make -j4
