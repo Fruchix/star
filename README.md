@@ -2,7 +2,7 @@
 
 star is a (slightly over-engineered) Unix command line bookmark manager. Dynamically star your favorite folders and instantly navigate (cd) to them.
 
-It is written in Bash, but can be used with Zsh as long as there is an available Bash version (>= 3.2) (the autocompletion uses bash features even for Zsh).
+It is written in Bash, but can be used with Zsh as long as there is an available Bash version (>= 3.2).
 
 ## Table of contents <!-- omit from toc -->
 
