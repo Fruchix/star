@@ -4,6 +4,10 @@ star is a (slightly over-engineered) Unix command line bookmark manager. Dynamic
 
 It is written in Bash, but can be used with Zsh as long as there is an available Bash version (>= 3.2).
 
+> ### Important notice
+> Due to the existence of another tool called [`star`](https://linux.die.net/man/1/star), this tool will probably be renamed.  
+> I guarantee that the new name will begin with `star`, as I want to keep this "star" idea.
+
 ## Table of contents <!-- omit from toc -->
 
 - [Features](#features)
