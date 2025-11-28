@@ -386,6 +386,27 @@ echo '[[ ":${PATH}:" =~ ":/usr/local/bin:" ]] || export PATH="/usr/local/bin:$PA
 echo 'eval "$(command star init zsh)"' >> ~/.zshrc
 ```
 
+<details>
+  <summary>Installation on Nix</summary>
+
+If you're using Nix or NixOS, you can install star using the provided flake:
+
+```sh
+# Run directly without installing
+nix run github:Fruchix/star
+
+# Install to your user profile
+nix profile install github:Fruchix/star
+
+# Or add to your flake inputs and use in your configuration
+```
+
+After installation, initialize star in your shell configuration:
+```sh
+eval "$(command star init "$([[ -n $BASH_VERSION ]] && echo bash || echo zsh)")"
+```
+
+</details>
 
 ### Uninstalling
 
