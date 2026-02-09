@@ -167,7 +167,7 @@ display_info() {
     echo ""
     echo "Environment variables (configuration):"
     local star_env_vars_config
-    star_env_vars_config="$(get_star_environment_variables_configuration)"
+    star_env_vars_config="$(get_star_environment_variables_configuration | sort)"
     if [[ -z "${star_env_vars_config}" ]]; then
         echo "    (none)"
     else
