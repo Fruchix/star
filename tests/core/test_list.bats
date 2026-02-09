@@ -11,13 +11,13 @@ teardown() { teardown_common; }
 
   export __STAR_LIST_FORMAT="%f<BR>%l"
   run star list
-  [ "$status" -eq 0 ]
+  [[ "$status" -eq 0 ]]
   # default command "column" produces a two whitespaces separation
   [[ "$output" == "name  $TEST_ROOT/dir" ]]
 
   export __STAR_LIST_FORMAT="%f<BR>-<BR>%l"
   run star list
-  [ "$status" -eq 0 ]
+  [[ "$status" -eq 0 ]]
   [[ "$output" == "name  -  $TEST_ROOT/dir" ]]
 }
 
@@ -30,7 +30,7 @@ teardown() { teardown_common; }
 
   export __STAR_LIST_FORMAT="<INDEX>"
   run star list
-  [ "$status" -eq 0 ]
+  [[ "$status" -eq 0 ]]
   [[ "$(echo "$output" | head -n 1)" == "1" ]]
   [[ "$(echo "$output" | tail -n 1)" == "2" ]]
 }

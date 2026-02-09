@@ -30,7 +30,7 @@ star_load_and_echo_pwd() {
 
 @test "star load - load without any starred directories fails" {
   run star load 1
-  [ "$status" -eq 0 ]
+  [[ "$status" -eq 0 ]]
   [[ "$output" == *"no starred directories"* ]]
 }
 
@@ -45,7 +45,7 @@ star_load_and_echo_pwd() {
     return 1
   fi
   log_variable PWD
-  [ "$PWD" = "$TEST_ROOT/foo_index" ]
+  [[ "$PWD" == "$TEST_ROOT/foo_index" ]]
 }
 
 @test "star load - does not accept invalid indexes" {
@@ -53,7 +53,7 @@ star_load_and_echo_pwd() {
   star add "$TEST_ROOT/foo_index"
   
   run star load 2
-  [ "$status" -ne 0 ]
+  [[ "$status" -ne 0 ]]
   [[ "$output" == *"Invalid index"* ]]
 
   # we do not test negative numbers as it is not relevant 
@@ -71,7 +71,7 @@ star_load_and_echo_pwd() {
     return 1
   fi
   log_variable PWD
-  [ "$PWD" = "$TEST_ROOT/foo_name" ]
+  [[ "$PWD" == "$TEST_ROOT/foo_name" ]]
 }
 
 @test "star load - load by name containing slashes" {
@@ -85,7 +85,7 @@ star_load_and_echo_pwd() {
     return 1
   fi
   log_variable PWD
-  [ "$PWD" = "$TEST_ROOT/foo_slash" ]
+  [[ "$PWD" == "$TEST_ROOT/foo_slash" ]]
 }
 
 @test "star load - load updates the access time" {
@@ -109,7 +109,7 @@ star_load_and_echo_pwd() {
     return 1
   fi
   log_variable PWD
-  [ "$PWD" = "$TEST_ROOT/foo_A" ]
+  [[ "$PWD" == "$TEST_ROOT/foo_A" ]]
 
   sleep 1
 
@@ -121,5 +121,5 @@ star_load_and_echo_pwd() {
     return 1
   fi
   log_variable PWD
-  [ "$PWD" = "$TEST_ROOT/foo_B" ]
+  [[ "$PWD" == "$TEST_ROOT/foo_B" ]]
 }
