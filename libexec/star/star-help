@@ -38,10 +38,13 @@ EOF
 
 usage-load() {
     cat << EOF
-Usage: star load STAR
-       star l STAR
+Usage: star load [STAR]
+       star l [STAR]
 
 Navigate (cd) into the starred directory.
+
+By default, giving no argument will list the stars, to provide a single command for listing and navigating.
+This behavior can be disabled by setting the environment variable "__STAR_ENABLE_LOADLISTS" to "no".
 
     STAR
         Should be the name or index of a starred directory (one that is listed using "star list").

@@ -12,9 +12,19 @@ star_load_and_echo_pwd() {
   echo "$PWD"
 }
 
-@test "star load - requires at least one argument" {
-  run star load
-  [ "$status" -ne 0 ]
+@test "star load - no argument is equivalent to star list with __STAR_ENABLE_LOADLISTS=yes" {
+  mkdir -p "$TEST_ROOT/dir"
+  star add "$TEST_ROOT/dir" "name"
+
+  __STAR_LIST_FORMAT="%f<BR>%l" __STAR_ENABLE_LOADLISTS=yes run star load
+  [[ "$status" -eq 0 ]]
+  # default command "column" produces a two whitespaces separation
+  [[ "$output" == "name  $TEST_ROOT/dir" ]]
+}
+
+@test "star load - requires at least one argument with __STAR_ENABLE_LOADLISTS=no" {
+  __STAR_ENABLE_LOADLISTS=no run star load
+  [[ "$status" -ne 0 ]]
   [[ "$output" == *"Usage"* ]]
 }
 

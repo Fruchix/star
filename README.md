@@ -42,13 +42,16 @@ It is written in Bash, but can be used with Zsh as long as there is an available
 <details>
   <summary>Instantly navigate into your favorite directories</summary>
 
-  - `star load <STAR>`: `cd` into the star's directory (the star is identified by its name or its index)
+  - `star load [STAR]`: `cd` into the star's directory (the star is identified by its name or its index)
+  - By default, `star load` without arguments is equivalent to `star list`, to have a single command for listing and navigating
   
   <div align="left">
-    <img width="471" height="345" alt="navigate" src="https://github.com/user-attachments/assets/91c7cb10-33e3-457b-a1fa-d7f251d6a53f" />
+    <img width="458" height="435" src="https://github.com/user-attachments/assets/1ba516e0-3baf-42f6-9059-35cc1f026232" alt="Navigate to favorite directories" />
   </div>
-  
+
   > The output of `star list` is sorted according to when each element was loaded last (this can be configured).
+
+  > Setting `__STAR_ENABLE_LOADLISTS` to `no` will make `star load` without arguments cause an error.
 </details>
 
 <details>
@@ -94,8 +97,7 @@ https://github.com/user-attachments/assets/a3917ccf-4a6a-424d-a729-24860235c83f
 
   - `sta`: alias for `star add`
   - `unstar` or `strm`: aliases for `star rm`
-  - `stl`: for `star list`
-  - `stl <STAR>`: for `star load <STAR>`
+  - `stl`: alias for `star load` (and `star list` when used without arguments and `__STAR_ENABLE_LOADLISTS=yes`)
   
   <div align="left">
     <img width="524" height="351" alt="aliases" src="https://github.com/user-attachments/assets/0ee83ce3-fc4c-4a07-9601-1d86dca45ce0" />
@@ -194,10 +196,13 @@ https://github.com/user-attachments/assets/a3917ccf-4a6a-424d-a729-24860235c83f
 > 
 > #### load
 > ```sh
-> Usage: star load STAR
->        star l STAR
+> Usage: star load [STAR]
+>        star l [STAR]
 > 
 > Navigate (cd) into the starred directory.
+> 
+> By default, giving no argument will list the stars, to provide a single command for listing and navigating.
+> This behavior can be disabled by setting the environment variable \`__STAR_ENABLE_LOADLISTS\` to "no".
 > 
 >     STAR
 >         Should be the name or index of a starred directory (one that is listed using "star list").
@@ -452,6 +457,7 @@ Some features can be enabled or disabled by setting the corresponding environmen
 |----------|-------|---------|-------------|
 | `__STAR_ENABLE_ENVVARS` | `yes` / `no` | `yes` | Whether to dynamically set environment variables named after the bookmarks (see [Features](#features)) |
 | `__STAR_ENABLE_ALIASES` | `yes` / `no` | `yes` | Whether to add aliases for common commands (`sta`, `unstar`, `strm`, `stl`) (see [Features](#features)) |
+| `__STAR_ENABLE_LOADLISTS` | `yes` / `no` | `yes` | If "yes", `star load` without arguments is equivalent to `star list`, else it will cause an error (missing argument). |
 
 Note that when updating `__STAR_ENABLE_ENVVARS`, the change will only be effective at the next invocation of star.
 

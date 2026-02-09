@@ -99,7 +99,10 @@ Variables to toggle features:
 - `__STAR_ENABLE_ALIASES`: whether to add aliases for common commands:
   - `sta`: alias for `star add`
   - `unstar` and `strm`: alias for `star remove`
-  - `stl`: actually a function, that serves as both `star list` (without arguments) AND `star load` (when an argument is provided)
+  - `stl`: alias for `star load` (and `star list` when used without arguments and `__STAR_ENABLE_LOADLISTS=yes`)
+- `__STAR_ENABLE_LOADLISTS`: change the behaviour of `star load`:
+  - when set to `yes`, `star load` without arguments will list the stars, to provide a single command for listing and navigating.
+  - when set to `no`, `star load` without arguments will cause an error and display usage information.
 
 Variables to configure the colors:
 - `__STAR_COLOR_NAME`: 24-bits color for the name of a bookmark
@@ -255,6 +258,8 @@ star list
 # order is changed according to last accessed element (can be configured)
 star load 2
 star list
+# no argument = star list
+star load
 ```
 
 Autocompletion is your friend

@@ -38,6 +38,9 @@ export __STAR_ENABLE_ENVVARS="${__STAR_ENABLE_ENVVARS:-"yes"}"
 # Enable (yes) or disable (no) the aliases
 export __STAR_ENABLE_ALIASES="${__STAR_ENABLE_ALIASES:-"yes"}"
 
+# Enable (yes) or disable (no) whether "star load" with no arguments is equivalent to "star list" or causes an error
+export __STAR_ENABLE_LOADLISTS="${__STAR_ENABLE_LOADLISTS:-"yes"}"
+
 _star_add_variable()
 {
     local star_name=$1
@@ -213,6 +216,12 @@ star()
         LOAD)
             # first argument should be the name or the index of the star to load
             if [[ $# -lt 1 ]]; then
+                # if the following option is enabled, using star load without argument is equivalent to star list
+                if [[ "$__STAR_ENABLE_LOADLISTS" == "yes" ]]; then
+                    "${_STAR_HOME}/libexec/star/star-list"
+                    return $?
+                fi
+
                 command echo "star load: missing argument."
                 "${_STAR_HOME}/libexec/star/star-help" --mode=load
                 return 1
@@ -552,15 +561,5 @@ if [[ "$__STAR_ENABLE_ALIASES" == "yes" ]]; then
     alias sta="star add"        # star add
     alias unstar="star remove"  # star remove
     alias strm="star remove"    # star remove
-
-    # function that can be used as alias for both: 
-    # - "star list" (without argument)
-    # - "star load" (whith argument)
-    stl() {
-        if [[ $# -eq 0 ]]; then
-            star list
-        else
-            star load "$@"
-        fi
-    }
+    alias stl="star load"       # star load
 fi
