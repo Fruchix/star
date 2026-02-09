@@ -76,7 +76,7 @@ https://github.com/user-attachments/assets/a3917ccf-4a6a-424d-a729-24860235c83f
 
 #### More information <!-- omit from toc -->
 - The environment variables are only exported if they do not overwrite an already existing environment variable that is not related to star
-- This feature can be disabled (see [Enabling/disabling features](#enablingdisabling-features))
+- This feature can be disabled using `__STAR_ENABLE_ENVVARS=no` (see [Enabling/disabling features](#enablingdisabling-features))
 
 </details>
 
@@ -104,7 +104,7 @@ https://github.com/user-attachments/assets/a3917ccf-4a6a-424d-a729-24860235c83f
   </div>
 
 #### More information <!-- omit from toc -->
-- This feature can be disabled (see [Enabling/disabling features](#enablingdisabling-features))
+- This feature can be disabled using `__STAR_ENABLE_ALIASES=no` (see [Enabling/disabling features](#enablingdisabling-features))
 
 </details>
 
