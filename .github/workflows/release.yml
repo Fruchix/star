@@ -19,6 +19,7 @@ jobs:
 
       - name: Create archive
         id: create-archive
+        shell: bash
         run: |
           LATEST_TAG="$(git describe --tags --abbrev=0)"
 
@@ -74,8 +75,8 @@ jobs:
         uses: softprops/action-gh-release@v2
         if: steps.create-archive.outcome == 'success'
         with:
-          tag_name: $LATEST_TAG
-          name: $LATEST_TAG
+          tag_name: ${{ env.LATEST_TAG }}
+          name: ${{ env.LATEST_TAG }}
           files: |
-            "$ARCHIVE_NAME"
-            "$CHECKSUM_NAME"
+            ${{ env.ARCHIVE_NAME }}
+            ${{ env.CHECKSUM_NAME }}
