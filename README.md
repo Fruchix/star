@@ -147,7 +147,7 @@ https://github.com/user-attachments/assets/a3917ccf-4a6a-424d-a729-24860235c83f
 >     OPTION
 >         -h, --help          Show this help message
 >         -v, --version       Show star version
->         -I, --information   Show more information about the star installation
+>         -I, --info          Show more information about the star installation
 > ```
 > 
 >   
