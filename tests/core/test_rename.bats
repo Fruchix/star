@@ -25,6 +25,16 @@ teardown() { teardown_common; }
   [ "$(readlink -f "${CURRENT_TEST_DATA_DIR}/name2")" = "$TEST_ROOT/foo" ]
 }
 
+@test "star rename - rename is case sensitive" {
+  mkdir "$TEST_ROOT/foo"
+  star add "$TEST_ROOT/foo" "FOO"
+
+  run star rename FOO foo
+  [ "$status" -eq 0 ]
+  [[ -L "${CURRENT_TEST_DATA_DIR}/foo" ]]
+  [ "$(readlink -f "${CURRENT_TEST_DATA_DIR}/foo")" = "$TEST_ROOT/foo" ]
+}
+
 @test "star rename - rename fails if new name exists" {
   mkdir "$TEST_ROOT/foo"
   mkdir "$TEST_ROOT/bar"
