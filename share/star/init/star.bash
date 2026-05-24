@@ -435,7 +435,7 @@ star()
             if [[ -e "${_STAR_DATA_HOME}/stars/${rename_src}" ]]; then
                 # if names are the same except for case then try to bypass using temporary rename
                 # case sensitive renaming can fail because of file systems, or even mv resolving symlinks instead of renaming them
-                if [[ "${rename_src,,}" == "${rename_dst,,}" ]]; then
+                if [[ "$(echo "${rename_src}" | tr '[:upper:]' '[:lower:]')" == "$(echo "${rename_dst}" | tr '[:upper:]' '[:lower:]')" ]]; then
                     # try to find a random temporary name that does not exist without using tools like mktemp (less dependencies)
                     local random_suffix_attempts=3
                     local random_suffix="$RANDOM"
