@@ -289,7 +289,7 @@ To enable `star` to work properly, ensure your system meets the requirements:
 - package `GNU coreutils` (for `realpath`, `printf`, `mkdir`, `rm`, `mv`, `cp`, `echo`, etc.)
 - package `GNU findutils` (for `find`)
 - command `column` (uses portable options `-t` and `-s` to format the listing, so any version should work)
-- `bash >= 3.2` (star uses Bash's autocompletion features, even for Zsh)
+- `bash >= 3.2`
 
 On MacOS, the default utils for `find`, `printf`, `echo`, etc. are not GNU versions. You can install the GNU versions using Homebrew (see below). However, MacOS comes with `bash` version 3.2 by default, and has a `column` implementation that has `-t` and `-s` options.
 
@@ -525,9 +525,7 @@ Contributions are welcome! Please submit [issues](https://github.com/Fruchame/st
 - [ ] Add a "no pollution test" that ensures that all local variables are declared as local, and no unwanted global variables are created
 - [ ] Add tests for environment variable generation
 - [ ] Add shellcheck testing in CI
-
-#### Dependencies removal  <!-- omit from toc -->
-- [ ] Remove dependency on `bash >= 3.2` for Zsh by translating the bash autocompletion system in pure Zsh
+- [ ] Add tests for flake
 
 ### Development
 
@@ -552,7 +550,7 @@ To run all tests, use the following script:
 
 ## Contributors
 
-Special thanks to [@PourroyJean](https://www.github.com/PourroyJean) for contributing to this project.
+Special thanks to [@PourroyJean](https://www.github.com/PourroyJean) and [@ayys](https://github.com/ayys) for contributing to this project.
 
 ## License
 
