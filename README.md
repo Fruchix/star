@@ -289,7 +289,7 @@ To enable `star` to work properly, ensure your system meets the requirements:
 - package `GNU coreutils` (for `realpath`, `printf`, `mkdir`, `rm`, `mv`, `cp`, `echo`, etc.)
 - package `GNU findutils` (for `find`)
 - command `column` (uses portable options `-t` and `-s` to format the listing, so any version should work)
-- `bash >= 3.2` (star uses Bash's autocompletion features, even for Zsh)
+- `bash >= 3.2`
 
 On MacOS, the default utils for `find`, `printf`, `echo`, etc. are not GNU versions. You can install the GNU versions using Homebrew (see below). However, MacOS comes with `bash` version 3.2 by default, and has a `column` implementation that has `-t` and `-s` options.
 
