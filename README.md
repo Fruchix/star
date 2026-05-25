@@ -525,9 +525,7 @@ Contributions are welcome! Please submit [issues](https://github.com/Fruchame/st
 - [ ] Add a "no pollution test" that ensures that all local variables are declared as local, and no unwanted global variables are created
 - [ ] Add tests for environment variable generation
 - [ ] Add shellcheck testing in CI
-
-#### Dependencies removal  <!-- omit from toc -->
-- [ ] Remove dependency on `bash >= 3.2` for Zsh by translating the bash autocompletion system in pure Zsh
+- [ ] Add tests for flake
 
 ### Development
 
@@ -552,7 +550,7 @@ To run all tests, use the following script:
 
 ## Contributors
 
-Special thanks to [@PourroyJean](https://www.github.com/PourroyJean) for contributing to this project.
+Special thanks to [@PourroyJean](https://www.github.com/PourroyJean) and [@ayys](https://github.com/ayys) for contributing to this project.
 
 ## License
 
