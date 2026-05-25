@@ -431,18 +431,59 @@ star()
             # (easier to remove all environment variables)
             _star_unset_variables
 
+            local res
             if [[ -e "${_STAR_DATA_HOME}/stars/${rename_src}" ]]; then
+                # if names are the same except for case then try to bypass using temporary rename
+                # case sensitive renaming can fail because of file systems, or even mv resolving symlinks instead of renaming them
+                if [[ "$(echo "${rename_src}" | tr '[:upper:]' '[:lower:]')" == "$(echo "${rename_dst}" | tr '[:upper:]' '[:lower:]')" ]]; then
+                    # try to find a random temporary name that does not exist without using tools like mktemp (less dependencies)
+                    local random_suffix_attempts=3
+                    local random_suffix="$RANDOM"
+                    while [[ -e "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}" && $random_suffix_attempts -gt 0 ]]; do
+                        random_suffix="$random_suffix$RANDOM"
+                        ((random_suffix_attempts--))
+                    done
+
+                    # temporary rename
+                    if ! command mv "${_STAR_DATA_HOME}/stars/${rename_src}" "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}"; then
+                        res=$?
+                        command echo -e "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET}."
+                        command echo -e "This temporary name is because the two names are the same except for case, and would have been renamed to the final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                        return $res
+                    fi
+
+                    # final rename
+                    if ! command mv "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}" "${_STAR_DATA_HOME}/stars/${rename_dst}"; then
+                        res=$?
+                        # if final rename failed, try to revert it
+                        if ! command mv "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}" "${_STAR_DATA_HOME}/stars/${rename_src}"; then
+                            res=$?
+                            command echo -e "Failed to rename star from temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET} to final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                            command echo -e "This temporary rename was used because the two names were the same except for the case. The temporary rename worked, but the final rename AND it revert to original name both failed."
+                            command echo -e "Good luck, bye!"
+                            return $res
+                        else
+                            command echo -e "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                            return $res
+                        fi
+                    fi
+
+                    command echo -e "Renamed star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                    return 0
+                fi
+
                 if [[ -e "${_STAR_DATA_HOME}/stars/${rename_dst}" ]]; then
                     command echo -e "There is already a star named ${COLOR_STAR}${rename_dst}${COLOR_RESET}."
                     return 2
                 fi
 
                 if ! command mv "${_STAR_DATA_HOME}/stars/${rename_src}" "${_STAR_DATA_HOME}/stars/${rename_dst}"; then
-                    local res=$?
+                    res=$?
                     command echo -e "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
                     return $res
                 fi
                 command echo -e "Renamed star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                return 0
             else
                 command echo -e "Star ${COLOR_STAR}${rename_src}${COLOR_RESET} does not exist."
                 return 1
