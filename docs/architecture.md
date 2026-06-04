@@ -171,9 +171,9 @@ A release can be created using:
 ./configure --prefix=
 ./install.sh --release
 
-# Produces an archive 'star-v2.0.0.tar.gz' containing:
+# Produces an archive 'star-v2.2.0.tar.gz' containing:
 #
-# star-v2.0.0
+# star-v2.2.0
 # ├── bin
 # ├── libexec
 # ├── share
@@ -190,9 +190,9 @@ If a release should already contain the root directories, like the absolute path
 ./configure --prefix=/usr/local
 ./install.sh
 
-# Produces an archive 'star-v2.0.0.tar.gz' containing:
+# Produces an archive 'star-v2.2.0.tar.gz' containing:
 #
-# star-v2.0.0
+# star-v2.2.0
 # └── usr
 #     └── local
 #         ├── bin
