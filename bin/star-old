@@ -1,0 +1,307 @@
+#!/usr/bin/env bash
+
+# this variable can be edited in place by the installation script,
+# if it is set the _STAR_HOME detection will be skipped, and this value will be used instead
+STAR_HOME=
+
+
+### Usage ###
+
+usage() {
+    cat <<EOF
+Usage: star MODE [ARGS...]
+       star OPTION
+
+This script is mainly used for initializing the star environment.
+
+To enable all star functionalities, run one of the following commands (depending on your shell):
+    eval "\$(command star init bash)"
+    eval "\$(command star init zsh)"
+Also add this line to your shell configuration file (e.g. ~/.bashrc or ~/.zshrc) to automatically load star at shell startup.
+
+MODE:
+    init <SHELL_TYPE>   Initialize the star environment for the specified shell. Supported shells are: bash, zsh.
+
+OPTION:
+    -h, --help          Show this help message
+    -v, --version       Show the star version
+    -I, --info          Show more information about the star installation
+EOF
+}
+
+usage_init() {
+    cat <<EOF
+Usage: star init SHELL_TYPE
+Initialize the star environment for the specified shell type.
+
+SHELL_TYPE:
+  bash      Bash shell
+  zsh       Zsh shell
+EOF
+}
+
+### Main function ###
+
+main() {
+    if [[ $# -lt 1 ]]; then
+        err "missing MODE argument."
+        usage >&2
+        return 1
+    fi
+
+    # parse the mode
+    local mode="$1"
+    shift
+    case $mode in
+        init) mode=INIT  ;;
+        -I|--info)
+            display_info
+            return 0
+            ;;
+        -v|--version)
+            display_version
+            return 0
+            ;;
+        -h|--help)
+            usage
+            return 0
+            ;;
+        *)
+            err "invalid mode '$mode'"
+            usage >&2
+            return 1
+            ;;
+    esac
+
+    # set necessary environment variables
+    set_star_home
+    set_star_config_home
+    set_star_config_file
+    set_star_data_home
+
+    "${_STAR_HOME}"/libexec/star/star-deps || {
+        local ret=$?
+        err "Dependency check failed, cannot run star."
+        err "See above messages for more details, or visit https://github.com/Fruchix/star for installation instructions."
+        exit $ret
+    }
+
+    check_installation || return $?
+
+    # manage each mode
+    case ${mode} in
+        INIT)
+            if [[ $# -lt 1 ]]; then
+                err "missing SHELL_TYPE argument."
+                usage_init >&2
+                return 1
+            fi
+            # initialize star environment
+            local shell_type="$1"
+            shift
+            init_star "$shell_type"
+            return $?
+            ;;
+        *)
+            err "Unknown mode: $mode"
+            return 1
+            ;;
+    esac
+}
+
+### Core logic functions ###
+
+init_star() {
+    local shell_type="$1"
+
+    # checking valid shell type
+    case $shell_type in
+        bash|zsh) ;;
+        *)
+            err "unknown SHELL_TYPE: $shell_type"
+            usage_init >&2
+            return 1
+            ;;
+    esac
+
+    # for all shells, export the following environment variables
+    echo "export _STAR_HOME=\"${_STAR_HOME}\""
+    echo "export _STAR_DATA_HOME=\"${_STAR_DATA_HOME}\""
+    echo "export _STAR_CONFIG_FILE=\"${_STAR_CONFIG_FILE}\""
+
+    # shell that was used to initialize star, 
+    # that will be used by "star config" to reload the configuration
+    echo "export __STAR_SHELL=\"${shell_type}\""
+
+    case $shell_type in
+        bash|zsh)
+            cat "${_STAR_HOME}/share/star/init/star.bash"
+            echo ""
+            cat "${_STAR_HOME}/share/star/completion/star.bash"
+            ;;
+    esac
+}
+
+display_info() {
+    echo "star $(display_version)"
+
+    echo ""
+    echo "Files:"
+    if [[ -f ${_STAR_HOME}/share/star/manifest.txt ]]; then
+        local files
+        files=$(cat "${_STAR_HOME}/share/star/manifest.txt")
+        for f in $files; do
+            echo "    ${_STAR_HOME}/${f}"
+        done
+    else
+        echo "    (manifest file not found, should be at: ${_STAR_HOME}/share/star/manifest.txt)"
+    fi
+
+    echo ""
+    echo "Environment variables (installation):"
+    echo "    _STAR_HOME=${_STAR_HOME}"
+    echo "    _STAR_DATA_HOME=${_STAR_DATA_HOME}"
+    echo "    _STAR_CONFIG_HOME=${_STAR_CONFIG_HOME}"
+    echo "    _STAR_CONFIG_FILE=${_STAR_CONFIG_FILE}"
+
+    echo ""
+    echo "Environment variables (configuration):"
+    local star_env_vars_config
+    star_env_vars_config="$(get_star_environment_variables_configuration | sort)"
+    if [[ -z "${star_env_vars_config}" ]]; then
+        echo "    (none)"
+    else
+        while IFS= read -r; do
+            echo "    $REPLY"
+        done < <(echo "${star_env_vars_config}")
+    fi
+}
+
+
+### Specific util functions ###
+
+display_version() {
+    local version
+    version="$(cat "${_STAR_HOME}/share/star/VERSION" 2>/dev/null || echo "unknown")"
+    echo "${version}"
+}
+
+set_star_home() {
+    if [[ -n "${STAR_HOME}" ]]; then
+        export _STAR_HOME="${STAR_HOME}"
+        return 0
+    fi
+    local script_dir
+    # the "realpath ${BASH_SOURCE[0]}" is for the case where there is a symlink to this file,
+    # we want to resolve it to find the actual installation directory
+    script_dir="$(realpath "$( cd -- "$( dirname -- "$(realpath "${BASH_SOURCE[0]}")" )" && pwd )")"
+
+    # star is expected to be located at: <installation_dir>/bin/star
+    installation_dir="$(realpath "$script_dir/..")"
+    if [[ "${installation_dir}/bin" != "$script_dir" ]]; then
+        err "star program should be located in a \"bin\" directory."
+        return 1
+    fi
+
+    export _STAR_HOME="$installation_dir"
+}
+
+set_star_config_home() {
+    # Where to search for user-specific config files (in this case, starred directory)
+    # By default, use _STAR_CONFIG_HOME if it is already set,
+    # else try to use XDG_CONFIG_HOME, 
+    # else search at $HOME/.config
+    #
+    # In each case, a sub-directory "star" is created
+    if [[ -z "${_STAR_CONFIG_HOME}" ]]; then
+        if [[ -n "${XDG_CONFIG_HOME}" ]]; then
+            export _STAR_CONFIG_HOME="${XDG_CONFIG_HOME}/star"
+        else
+            export _STAR_CONFIG_HOME="$HOME/.config/star"
+        fi
+    fi
+}
+
+set_star_config_file() {
+    # Path to the star configuration file
+    # By default, use _STAR_CONFIG_FILE if it is already set,
+    # else use "${_STAR_CONFIG_HOME}/star_config.sh"
+    export _STAR_CONFIG_FILE=${_STAR_CONFIG_FILE:-"${_STAR_CONFIG_HOME?}/star_config.sh"}
+}
+
+set_star_data_home() {
+    # Where to search for user-specific data (in this case, starred directory)
+    # By default, use _STAR_DATA_HOME if it is already set,
+    # else try to use XDG_DATA_HOME, 
+    # else search at $HOME/.local/share
+    #
+    # In each case, a sub-directory "star" is created
+    if [[ -z "${_STAR_DATA_HOME}" ]]; then
+        if [[ -n "${XDG_DATA_HOME}" ]]; then
+            export _STAR_DATA_HOME="${XDG_DATA_HOME}/star"
+        else
+            export _STAR_DATA_HOME="$HOME/.local/share/star"
+        fi
+    fi
+}
+
+check_installation() {
+    if [[ ! -d "${_STAR_HOME}/bin/" ]]; then
+        err "Required directory is missing: ${_STAR_HOME}/bin/"
+        return 4
+    else
+        if [[ ! -f "${_STAR_HOME}/bin/star" ]]; then
+            err "Required file is missing: ${_STAR_HOME}/bin/star"
+            return 4
+        fi
+    fi
+
+    if [[ ! -d "${_STAR_HOME}/libexec/star/" ]]; then
+        err "Required directory is missing: ${_STAR_HOME}/libexec/star/"
+        return 4
+    else
+        if [[ ! -f "${_STAR_HOME}/libexec/star/star-setcolors.sh" ]]; then
+            err "Required file is missing: ${_STAR_HOME}/libexec/star/star-setcolors.sh"
+            return 4
+        fi
+        if [[ ! -f "${_STAR_HOME}/libexec/star/star-help" ]]; then
+            err "Required file is missing: ${_STAR_HOME}/libexec/star/star-help"
+            return 4
+        fi
+        if [[ ! -f "${_STAR_HOME}/libexec/star/star-list" ]]; then
+            err "Required file is missing: ${_STAR_HOME}/libexec/star/star-list"
+            return 4
+        fi
+        if [[ ! -f "${_STAR_HOME}/libexec/star/star-prune" ]]; then
+            err "Required file is missing: ${_STAR_HOME}/libexec/star/star-prune"
+            return 4
+        fi
+    fi
+
+    if [[ ! -d "${_STAR_HOME}/share/star/init/" ]]; then
+        err "Required directory is missing: ${_STAR_HOME}/share/star/init/"
+        return 4
+    else
+        if [[ ! -f "${_STAR_HOME}/share/star/init/star.bash" ]]; then
+            err "Required file is missing: ${_STAR_HOME}/share/star/init/star.bash"
+            return 4
+        fi
+    fi
+}
+
+get_star_environment_variables_configuration() {
+    env | sed -e 's/\x1b/\\033/g' | grep '^__STAR_'
+}
+
+### Generic util functions ###
+
+err() {
+    echo "Error: $*" >&2
+}
+
+err_star_unloaded() {
+    err "star is not loaded. Please run 'eval \"\$(command star init bash)\"' to load star."
+}
+
+
+main "$@"

@@ -1,31 +1,106 @@
 #!/usr/bin/env bash
 
-# this variable can be edited in place by the installation script,
-# if it is set the _STAR_HOME detection will be skipped, and this value will be used instead
-STAR_HOME=
+# TODO: set _STARS_HOME if not already set
+# TODO: set _STARS_DATA_HOME if not already set
+# TODO: set _STARS_CONFIG_FILE if not already set (depends on _STARS_CONFIG_HOME if set)
 
+# At init:
+# - check deps
+# - check installation
+# - print export of variables
+# - print export of current shell __STARS_SHELL
 
-### Usage ###
+# character used to replace slashes in the star names
+STAR_NAMES_SEPARATOR="»"
+
+# colors
+COLOR_STAR="${__STAR_COLOR_NAME}"
+COLOR_PATH="${__STAR_COLOR_PATH}"
+COLOR_RESET="$__STAR_COLOR_RESET"
+
+# main
+main() {
+    if [[ $# -eq 0 ]]; then
+        usage >&2
+        return 1
+    fi
+
+    # set necessary env vars (functions will not overwrite if already defined)
+    set_star_home
+    set_star_config_home
+    set_star_config_file
+    set_star_data_home
+
+    # parse the mode
+    local arg_mode=$1
+    shift
+    case $arg_mode in
+        init)               star_mode_init "$@" ;;
+        add)                star_mode_add "$@"  ;;
+        L|list)             star_mode_list "$@" ;;
+        l|load)             star_mode_load "$@" ;;
+        mv|rename)             star_mode_rename "$@" ;;
+        rm|remove)          star_mode_remove "$@" ;;
+        reset)              star_mode_reset "$@" ;;
+        config)             star_mode_config "$@" ;;
+        h|help|-h|--help)   star_mode_help "$@" ;;
+        -v|--version)       star_mode_version "$@" ;;
+        -I|--info)          star_mode_info "$@";;
+        *)
+            err "star: invalid mode '$arg_mode'"
+            usage >&2
+            return 1
+            ;;
+    esac
+}
+
+### usage functions ###
 
 usage() {
-    cat <<EOF
-Usage: star MODE [ARGS...]
-       star OPTION
+    cat << EOF
+Usage: star [MODE]
+       star [OPTION]
 
-This script is mainly used for initializing the star environment.
+Dynamically bookmark and cd into directories.
+Bookmarks are called "stars".
 
-To enable all star functionalities, run one of the following commands (depending on your shell):
-    eval "\$(command star init bash)"
-    eval "\$(command star init zsh)"
-Also add this line to your shell configuration file (e.g. ~/.bashrc or ~/.zshrc) to automatically load star at shell startup.
+    MODE (related to stars management)
+        add     Add a new star
+        list    List all stars
+        load    cd into a starred directory
+        rename  Change the name of a star
+        remove  Remove a star
+        reset   Delete all stars
 
-MODE:
-    init <SHELL_TYPE>   Initialize the star environment for the specified shell. Supported shells are: bash, zsh.
+    MODE (miscellaneous)
+        config  Edit configuration file and apply changes
+        help    Show this help message
 
-OPTION:
-    -h, --help          Show this help message
-    -v, --version       Show the star version
-    -I, --info          Show more information about the star installation
+    Get more information for each mode using:
+        star MODE --help
+        star help MODE
+
+    OPTION
+        -h, --help          Show this help message
+        -v, --version       Show star version
+        -I, --info          Show more information about the star installation
+EOF
+    if ! check_wrapper_function_initialized; then
+        echo ""
+        usage_initialize_wrapper_function
+    fi        
+}
+
+usage_initialize_wrapper_function() {
+    cat << 'EOF'
+WARNING: star is not initialized in your current shell.
+
+    To initialize star, run one of the following commands (depending on your shell):
+        eval "$(command star init bash)"
+        eval "$(command star init zsh)"
+    Also add this line to your shell configuration file to automatically load star at shell startup.
+        echo -e '\neval "$(command star init bash)"' >> ~/.bashrc
+        echo -e '\neval "$(command star init zsh)"' >> ~/.zshrc
 EOF
 }
 
@@ -40,85 +115,139 @@ SHELL_TYPE:
 EOF
 }
 
-### Main function ###
+usage_add() {
+    cat << EOF
+Usage: star add PATH [NAME]
+       star a PATH [NAME]
 
-main() {
-    if [[ $# -lt 1 ]]; then
-        err "missing MODE argument."
-        usage >&2
-        return 1
-    fi
+Add a new star.
 
-    # parse the mode
-    local mode="$1"
-    shift
-    case $mode in
-        init) mode=INIT  ;;
-        -I|--info)
-            display_info
-            return 0
-            ;;
-        -v|--version)
-            display_version
-            return 0
-            ;;
-        -h|--help)
-            usage
-            return 0
-            ;;
-        *)
-            err "invalid mode '$mode'"
-            usage >&2
-            return 1
-            ;;
-    esac
+    PATH
+        Relative path to the directory to star.
+        e.g. "star add ." will star the current directory
 
-    # set necessary environment variables
-    set_star_home
-    set_star_config_home
-    set_star_config_file
-    set_star_data_home
-
-    "${_STAR_HOME}"/libexec/star/star-deps || {
-        local ret=$?
-        err "Dependency check failed, cannot run star."
-        err "See above messages for more details, or visit https://github.com/Fruchix/star for installation instructions."
-        exit $ret
-    }
-
-    check_installation || return $?
-
-    # manage each mode
-    case ${mode} in
-        INIT)
-            if [[ $# -lt 1 ]]; then
-                err "missing SHELL_TYPE argument."
-                usage_init >&2
-                return 1
-            fi
-            # initialize star environment
-            local shell_type="$1"
-            shift
-            init_star "$shell_type"
-            return $?
-            ;;
-        *)
-            err "Unknown mode: $mode"
-            return 1
-            ;;
-    esac
+    NAME
+        The name of the new star if provided, otherwise it will use the name of the current directory.
+        - Must be unique (among all stars)
+        - Can contain slashes: "/"
+        - Whitespaces will be replaced by a dash: "-"
+        - Names with only numeric characters will by prefixed by "dir-"
+EOF
 }
 
-### Core logic functions ###
+usage_list() {
+    cat << EOF
+Usage: star list [OPTIONS]
+       star L [OPTIONS]
 
-init_star() {
+List all stars, by default sorted according to last load (top ones are the last loaded stars).
+
+Listing can be customized either by:
+- editing the environment variables in the configuration file (see 'star config' for more information)
+- using options supported by the 'star-list' helper script
+
+Get the 'star-list' usage and options by running: 
+ "\${_STAR_HOME}/libexec/star/star-list" --help
+EOF
+}
+
+usage_load() {
+    cat << EOF
+Usage: star load [STAR]
+       star l [STAR]
+
+Navigate (cd) into the starred directory.
+
+By default, giving no argument will list the stars, to provide a single command for listing and navigating.
+This behavior can be disabled by setting the environment variable "__STAR_ENABLE_LOADLISTS" to "no".
+
+    STAR
+        Should be the name or index of a starred directory (one that is listed using "star list").
+EOF
+}
+
+usage_rename() {
+    cat << EOF
+Usage: star rename <STAR> <NEW_STAR_NAME>
+       star mv <STAR> <NEW_STAR_NAME>
+
+Rename an existing star.
+
+    STAR
+        Should be the name of a starred directory.
+
+    NEW_STAR_NAME
+        The new name of the star.
+        - Must be unique (among all stars)
+        - Can contain slashes /
+EOF
+}
+
+usage_remove() {
+    cat << EOF
+Usage: star remove <STAR> [STAR]...
+       star rm <STAR> [STAR]...
+
+Remove one or more stars.
+
+    STAR
+        Should be the name of a starred directory.
+EOF
+}
+
+usage_reset() {
+    cat << EOF
+Usage: star reset [-f|--force]
+
+Remove all stars and the ".star" directory.
+
+    --force, -f
+        Force reset without prompting the user.
+EOF
+}
+
+usage_config() {
+    cat << EOF
+Usage: star config
+
+Open the star configuration file in a terminal text editor then apply the updated configuration.
+
+Configuration file:
+    The configuration file is located at \$_STAR_CONFIG_FILE, which is by default "\$_STAR_CONFIG_HOME/star_config.sh".
+    Customizing \$_STAR_CONFIG_FILE will allow you to use any file for star configuration. Keep in mind that this file will get sourced after each "star config".
+
+    Customizing \$_STAR_CONFIG_HOME will allow you to change the directory where the default configuration file is stored (star_config.sh).
+    By default, this corresponds to:
+        - "\$XDG_CONFIG_HOME/star" if XDG_CONFIG_HOME is defined
+        - else "\$HOME/.config/star"
+
+    If the configuration file does not exist, star will suggest a command to create one from a provided template.
+
+    Template location:
+        \$_STAR_HOME/share/star/config/star_config.sh.template
+
+Editor:
+    - use the one defined in the environment variable \$EDITOR
+    - else use "nano" if available
+    - else use "vi" if available
+EOF
+}
+
+### star modes ###
+star_mode_init() {
+    if [[ $# -lt 1 ]]; then
+        err "star init: missing SHELL_TYPE argument."
+        usage_init >&2
+        return 1
+    fi
+    # initialize star environment
     local shell_type="$1"
 
     # checking valid shell type
     case $shell_type in
         bash|zsh) ;;
         *)
-            err "unknown SHELL_TYPE: $shell_type"
+            err "star init: unknown SHELL_TYPE: $shell_type"
             usage_init >&2
             return 1
             ;;
@@ -140,42 +269,326 @@ init_star() {
             cat "${_STAR_HOME}/share/star/completion/star.bash"
             ;;
     esac
+
+    return $?
 }
 
-display_info() {
-    echo "star $(display_version)"
+star_mode_add() {
+    # first argument has to be the relative path
+    if [[ $# -lt 1 ]]; then
+        err "star add: missing PATH argument."
+        usage_add >&2
+        return 1
+    fi
+    local src_dir
+    src_dir=$(realpath "$1")
+    shift
+    if [[ ! -d $src_dir ]]; then
+        err "star add: directory does not exist: '$src_dir'."
+        return 2
+    fi
 
-    echo ""
-    echo "Files:"
-    if [[ -f ${_STAR_HOME}/share/star/manifest.txt ]]; then
-        local files
-        files=$(cat "${_STAR_HOME}/share/star/manifest.txt")
-        for f in $files; do
-            echo "    ${_STAR_HOME}/${f}"
+    local star_to_store=""
+
+    # If there's another argument then use it as star name,
+    # else the star name will be created from the name of the directory
+    if [[ $# -gt 0 && ! "$1" =~ ^- ]]; then
+        star_to_store="$1"
+        shift
+    fi
+
+    # process other params
+    check_help_option_provided "add" "$@"
+
+    local dst_name dst_name_with_slashes dst_basename existing_star
+
+    if [[ ! -d "${_STAR_DATA_HOME}/stars" ]]; then
+        mkdir -p "${_STAR_DATA_HOME}/stars"
+    fi
+
+    if [[ ! "${star_to_store}" == "" ]]; then
+        # replace slashes by dir separator char: a star name can contain slashes
+        dst_name="$(replace_slashes_by_separator "$star_to_store")"
+    else
+        # else get the star name from the name of the directory
+        dst_name=$(basename "${src_dir}")
+    fi
+
+    # get the paths of all starred directories
+    local stars_path=()
+    while IFS= read -r; do
+        stars_path+=("$REPLY")
+    done < <(list_stars_paths)
+
+    # do not star this directory if it is already starred (even under another name)
+    if [[ "${stars_path[*]}" =~ (^|[[:space:]])${src_dir}($|[[:space:]]) ]]; then
+        # Find the star name for this directory's path
+        existing_star=$(get_star_name_from_path "$src_dir")
+        err "star add: directory ${COLOR_PATH}${src_dir}${COLOR_RESET} is already starred as ${COLOR_STAR}$(replace_separator_by_slashes "$existing_star")${COLOR_RESET}."
+        return 2
+    fi
+
+    # star names have to be unique: When adding a new starred directory using the basename of the path,
+    # if the name is already taken then it will try to concatenate the previous folder from the path,
+    # and will do this until the names are different or when there is no previous folder (root folder)
+    # example:
+    # in ~/foo/config:
+    #   star would add a new star called "config" that refers to the absolute path to ~/foo/config
+    # then in ~/bar/config:
+    #   star would try to add a new star called "config", but there would be a conflict, so it would
+    # add a new star called "bar/config"
+    # 
+    # As it is not possible to use slashes in file names, we use the special char '»' to split "bar" and "config", 
+    # that will be replaced by a slash when printing the star name or suggesting completion.
+    # The variable 'STAR_NAMES_SEPARATOR' must not be manually changed, as it would cause the non-recognition of previously starred directories (their star name could contain that separator).
+    if [[ "${star_to_store}" == "" ]]; then
+        # need to store the whitespace-free name in a temporary variable in order to keep the existing path
+        local tmp_name
+        tmp_name=$(echo "${dst_name}" | tr --squeeze-repeats ' ' | tr ' ' '-')
+
+        while [[ -e "${_STAR_DATA_HOME}/stars/${tmp_name}" ]]; do
+            dst_name_with_slashes="$(replace_separator_by_slashes "$dst_name")"
+            dst_basename=$(basename "${src_dir%%"$dst_name_with_slashes"}")
+
+            if [[ "${dst_basename}" == "/" ]]; then
+                err "star add: directory already starred with maximum possible path: ${COLOR_STAR}${dst_name_with_slashes}${COLOR_RESET}."
+                return 2
+            fi
+
+            dst_name="${dst_basename}${STAR_NAMES_SEPARATOR}${dst_name}"
+            # update the temporary name in order to check if it exists in the star names
+            tmp_name=$(echo "${dst_name}" | tr --squeeze-repeats ' ' | tr ' ' '-')
         done
+        # replace whitespaces with a single dash (needs to be done AFTER looping over paths, to keep the existing paths)
+        dst_name=$(echo "${dst_name}" | tr --squeeze-repeats ' ' | tr ' ' '-')
+
+    # When adding a new starred directory with a given name (as argument),
+    # then the name should not already exist
     else
-        echo "    (manifest file not found, should be at: ${_STAR_HOME}/share/star/manifest.txt)"
+        # replace whitespaces with a single dash
+        dst_name=$(echo "${dst_name}" | tr --squeeze-repeats ' ' | tr ' ' '-')
+
+        dst_name_with_slashes="$(replace_separator_by_slashes "$dst_name")"
+        if [[ -e "${_STAR_DATA_HOME}/stars/${dst_name}" ]]; then
+            # Get the path associated with star name
+            local target_path
+            
+            target_path=$(get_star_path_from_name "${dst_name//\//${STAR_NAMES_SEPARATOR}}")
+            target_path=$("${_STAR_HOME}/libexec/star/star-list" --get-path="${dst_name//\//${STAR_NAMES_SEPARATOR}}")
+
+            err "star add: a directory is already starred with the name \"${dst_name_with_slashes}\": ${COLOR_STAR}${dst_name_with_slashes}${COLOR_RESET} -> ${COLOR_PATH}${target_path}${COLOR_RESET}."
+            return 2
+        fi
     fi
 
-    echo ""
-    echo "Environment variables (installation):"
-    echo "    _STAR_HOME=${_STAR_HOME}"
-    echo "    _STAR_DATA_HOME=${_STAR_DATA_HOME}"
-    echo "    _STAR_CONFIG_HOME=${_STAR_CONFIG_HOME}"
-    echo "    _STAR_CONFIG_FILE=${_STAR_CONFIG_FILE}"
-
-    echo ""
-    echo "Environment variables (configuration):"
-    local star_env_vars_config
-    star_env_vars_config="$(get_star_environment_variables_configuration | sort)"
-    if [[ -z "${star_env_vars_config}" ]]; then
-        echo "    (none)"
-    else
-        while IFS= read -r; do
-            echo "    $REPLY"
-        done < <(echo "${star_env_vars_config}")
+    # if name is purely numeric, add a prefix in order to not mix with index based navigation
+    if [[ "${dst_name}" =~ ^[0-9]+$ ]]; then
+        dst_name="dir-${dst_name}"
     fi
+
+    if ! ln -s "${src_dir}" "${_STAR_DATA_HOME}/stars/${dst_name}"; then
+        local res=$?
+        err "star add: failed to add a new starred directory: ${COLOR_STAR}${dst_name//${STAR_NAMES_SEPARATOR}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
+        return $res
+    fi
+    echo -e "Added new starred directory: ${COLOR_STAR}${dst_name//${STAR_NAMES_SEPARATOR}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
+
+    # update environment variables
+    # if [[ "$__STAR_ENABLE_ENVVARS" == "yes" ]]; then
+    #     _star_add_variable "${dst_name}" "${src_dir}"
+    # fi
 }
+
+star_mode_list() {
+    "${_STAR_HOME}/libexec/star/star-list" "$@"
+    return $?
+}
+
+star_mode_load() {
+    :
+}
+
+star_mode_rename() {
+    :
+}
+
+star_mode_remove() {
+    if [[ $# -lt 1 ]]; then
+        err "star remove: missing argument(s)."
+        usage_remove
+        return 1
+    fi
+    local stars_to_remove=()
+    # remove multiple stars
+    while [[ $# -gt 0 ]]; do
+        stars_to_remove+=("$(replace_slashes_by_separator "$1")")
+        shift
+    done
+
+    local star_name
+    if [[ ! -d "${_STAR_DATA_HOME}/stars" || -z "$(ls -A "${_STAR_DATA_HOME}/stars" )" ]];then
+        err "star remove: there are no starred directories to remove."
+        return 1
+    fi
+
+    # remove all env variables while their paths are still known
+    # _star_unset_variables
+
+    for star_name in "${stars_to_remove[@]}"; do
+        if [[ -e "${_STAR_DATA_HOME}/stars/${star_name}" ]]; then
+            if ! rm "${_STAR_DATA_HOME}/stars/${star_name}"; then
+                local res=$?
+                err "star remove: Failed to remove starred directory: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
+                return $res
+            fi
+            echo -e "Removed starred directory: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
+        else
+            err "star remove: Could not find any starred directory with the name: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
+            return 1
+        fi
+    done
+    # re create the other environment variables
+    # _star_set_variables
+}
+
+star_mode_reset() {
+    :
+}
+
+star_mode_config() {
+    :
+}
+
+star_mode_help() {
+    usage >&2
+}
+
+star_mode_version() {
+    :
+}
+
+star_mode_info() {
+    :
+}
+
+# in case there are more arguments and it happens to be help option
+check_help_option_provided() {
+    local mode="$1"
+
+    shift
+    while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+            usage_"$mode"
+            return 0
+        fi
+        shift
+    done
+}
+
+check_wrapper_function_initialized() {
+    # check if a star function was initialized (had to be exported like 'export -f <function>')
+    declare -F | grep "^declare -fx star$" > /dev/null
+}
+
+### listing functions ###
+
+# list_broken_stars
+list_broken_stars() {
+    local current_dir="$PWD"
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        # skip each star in which we can cd
+        cd -P "$f" &>/dev/null && continue
+        replace_separator_by_slashes "$f"
+    done
+
+    cd "$current_dir" || return 2
+}
+
+# list_stars_names
+list_stars_names() {
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        replace_separator_by_slashes "$f"
+    done
+}
+
+# list_stars_paths
+list_stars_paths() {
+    local current_dir="$PWD"
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        cd -P "$f" &>/dev/null || continue
+        echo "$PWD"
+    done
+
+    cd "$current_dir" || return 2
+}
+
+# list_stars_names_and_path
+list_stars_names_and_path() {
+    local current_dir="$PWD"
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        cd -P "$f" &>/dev/null || continue
+        echo "$(replace_separator_by_slashes "$f") $PWD"
+    done
+
+    cd "$current_dir" || return 2
+}
+
+# list_stars_custom_format
+
+get_star_name_from_path() {
+    local given_star_path="$1"
+
+    local current_dir="$PWD"
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        cd -P "$f" &>/dev/null || continue
+        if [[ "$PWD" == "$given_star_path" ]]; then
+            replace_separator_by_slashes "$f"
+            cd "$current_dir" || return 2
+            return 0
+        fi
+    done
+
+    cd "$current_dir" || return 2
+    return 1
+}
+
+get_star_path_from_name() {
+    local given_star_name="$1"
+
+    local current_dir
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        if [[ "$(replace_separator_by_slashes "$f")" == "$given_star_name" ]]; then
+            current_dir="$PWD"
+            cd -P "$f" &>/dev/null ||  continue
+            echo "${PWD}"
+            cd "$current_dir" || return 2
+            return 0
+        fi
+    done
+
+    return 1
+}
+
+# list_broken_stars
+# echo "---"
+# list_stars_names
+# echo "---"
+# list_stars_paths
+# echo "---"
+# list_stars_names_and_path | column -t
+# echo "---"
+# get_star_path_from_name wikigraph
+# get_star_path_from_name lsqdfjh
+# echo "---"
+# get_star_name_from_path /Users/fruchame/Library/CloudStorage/OneDrive-HewlettPackardEnterprise
+# get_star_name_from_path sdmifhlgsdvbkfj
+# echo "---"
 
 
 ### Specific util functions ###
@@ -187,23 +600,21 @@ display_version() {
 }
 
 set_star_home() {
-    if [[ -n "${STAR_HOME}" ]]; then
-        export _STAR_HOME="${STAR_HOME}"
-        return 0
-    fi
-    local script_dir
-    # the "realpath ${BASH_SOURCE[0]}" is for the case where there is a symlink to this file,
-    # we want to resolve it to find the actual installation directory
-    script_dir="$(realpath "$( cd -- "$( dirname -- "$(realpath "${BASH_SOURCE[0]}")" )" && pwd )")"
+    if [[ -z "${_STAR_HOME}" ]]; then
+        local script_dir
+        # the "realpath ${BASH_SOURCE[0]}" is for the case where there is a symlink to this file,
+        # we want to resolve it to find the actual installation directory
+        script_dir="$(realpath "$( cd -- "$( dirname -- "$(realpath "${BASH_SOURCE[0]}")" )" && pwd )")"
 
-    # star is expected to be located at: <installation_dir>/bin/star
-    installation_dir="$(realpath "$script_dir/..")"
-    if [[ "${installation_dir}/bin" != "$script_dir" ]]; then
-        err "star program should be located in a \"bin\" directory."
-        return 1
-    fi
+        # star is expected to be located at: <installation_dir>/bin/star
+        installation_dir="$(realpath "$script_dir/..")"
+        if [[ "${installation_dir}/bin" != "$script_dir" ]]; then
+            err "star program should be located in a \"bin\" directory."
+            return 1
+        fi
 
-    export _STAR_HOME="$installation_dir"
+        export _STAR_HOME="$installation_dir"
+    fi
 }
 
 set_star_config_home() {
@@ -245,63 +656,31 @@ set_star_data_home() {
     fi
 }
 
-check_installation() {
-    if [[ ! -d "${_STAR_HOME}/bin/" ]]; then
-        err "Required directory is missing: ${_STAR_HOME}/bin/"
-        return 4
-    else
-        if [[ ! -f "${_STAR_HOME}/bin/star" ]]; then
-            err "Required file is missing: ${_STAR_HOME}/bin/star"
-            return 4
-        fi
-    fi
-
-    if [[ ! -d "${_STAR_HOME}/libexec/star/" ]]; then
-        err "Required directory is missing: ${_STAR_HOME}/libexec/star/"
-        return 4
-    else
-        if [[ ! -f "${_STAR_HOME}/libexec/star/star-setcolors.sh" ]]; then
-            err "Required file is missing: ${_STAR_HOME}/libexec/star/star-setcolors.sh"
-            return 4
-        fi
-        if [[ ! -f "${_STAR_HOME}/libexec/star/star-help" ]]; then
-            err "Required file is missing: ${_STAR_HOME}/libexec/star/star-help"
-            return 4
-        fi
-        if [[ ! -f "${_STAR_HOME}/libexec/star/star-list" ]]; then
-            err "Required file is missing: ${_STAR_HOME}/libexec/star/star-list"
-            return 4
-        fi
-        if [[ ! -f "${_STAR_HOME}/libexec/star/star-prune" ]]; then
-            err "Required file is missing: ${_STAR_HOME}/libexec/star/star-prune"
-            return 4
-        fi
-    fi
-
-    if [[ ! -d "${_STAR_HOME}/share/star/init/" ]]; then
-        err "Required directory is missing: ${_STAR_HOME}/share/star/init/"
-        return 4
-    else
-        if [[ ! -f "${_STAR_HOME}/share/star/init/star.bash" ]]; then
-            err "Required file is missing: ${_STAR_HOME}/share/star/init/star.bash"
-            return 4
-        fi
-    fi
+# function to replace slashes by the separator
+replace_slashes_by_separator() {
+    local name_with_slashes="$1"
+    echo "${name_with_slashes//\//${STAR_NAMES_SEPARATOR}}"
 }
 
-get_star_environment_variables_configuration() {
-    env | sed -e 's/\x1b/\\033/g' | grep '^__STAR_'
+# replace separator by slashes
+# should be used in command substitution due to the echo
+replace_separator_by_slashes() {
+    local name_with_separator="$1"
+    echo "${name_with_separator//${STAR_NAMES_SEPARATOR}//}"
 }
+
 
 ### Generic util functions ###
 
 err() {
-    echo "Error: $*" >&2
+    echo -e "$*" >&2
 }
 
 err_star_unloaded() {
     err "star is not loaded. Please run 'eval \"\$(command star init bash)\"' to load star."
 }
 
+
+### Entry point ###
 
 main "$@"
