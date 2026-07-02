@@ -212,6 +212,7 @@ https://github.com/user-attachments/assets/a3917ccf-4a6a-424d-a729-24860235c83f
 > #### rename
 > ```sh
 > Usage: star rename <STAR> <NEW_STAR_NAME>
+>        star mv <STAR> <NEW_STAR_NAME>
 > 
 > Rename an existing star.
 > 

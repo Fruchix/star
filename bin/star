@@ -39,7 +39,7 @@ main() {
         add)                star_mode_add "$@"  ;;
         L|list)             star_mode_list "$@" ;;
         l|load)             star_mode_load "$@" ;;
-        mv|rename)             star_mode_rename "$@" ;;
+        mv|rename)          star_mode_rename "$@" ;;
         rm|remove)          star_mode_remove "$@" ;;
         reset)              star_mode_reset "$@" ;;
         config)             star_mode_config "$@" ;;
@@ -409,7 +409,86 @@ star_mode_load() {
 }
 
 star_mode_rename() {
-    :
+    if [[ $# -lt 2 ]]; then
+        err "star rename: missing argument(s)."
+        usage_rename
+        return 1
+    fi
+    local rename_src rename_dst
+    rename_src="${1//\//${star_dir_separator}}"
+    rename_dst="${2//\//${star_dir_separator}}"
+
+
+    local res
+    if [[ ! -e "${_STAR_DATA_HOME}/stars/${rename_src}" ]]; then
+        err "star rename: Star ${COLOR_STAR}${rename_src}${COLOR_RESET} does not exist."
+        return 1
+    fi
+
+    # TODO: remove the environment variable corresponding to the old name
+
+    # if names are the same except their case then try to bypass using temporary rename
+    # case sensitive renaming can fail because of file systems, or even mv resolving symlinks instead of renaming them
+    if [[ "$(echo "${rename_src}" | tr '[:upper:]' '[:lower:]')" == "$(echo "${rename_dst}" | tr '[:upper:]' '[:lower:]')" ]]; then
+        # try to find a random temporary name that does not exist without using tools like mktemp (less dependencies)
+        local random_suffix_attempts=3
+        local random_suffix="$RANDOM"
+        while [[ -e "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}" && $random_suffix_attempts -gt 0 ]]; do
+            random_suffix="$random_suffix$RANDOM"
+            ((random_suffix_attempts--))
+        done
+
+        # temporary rename
+        if ! mv "${_STAR_DATA_HOME}/stars/${rename_src}" "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}"; then
+            res=$?
+            err "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET}."
+            err "This temporary name is because the two names are the same except for case, and would have been renamed to the final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+
+            # TODO: add environment variable back
+            return $res
+        fi
+
+        # final rename
+        if ! mv "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}" "${_STAR_DATA_HOME}/stars/${rename_dst}"; then
+            res=$?
+            # if final rename failed, try to revert it
+            if ! mv "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}" "${_STAR_DATA_HOME}/stars/${rename_src}"; then
+                res=$?
+                err "Failed to rename star from temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET} to final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                err "This temporary rename was used because the two names were the same except for the case. The temporary rename worked, but the final rename AND it revert to original name both failed."
+                err "Good luck, bye!"
+                return $res
+            else
+                err "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                # TODO: add environment variable back
+                return $res
+            fi
+        fi
+
+        out "Renamed star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+        # TODO: add environment variable back
+        return 0
+    fi
+
+    # else if the old and new names are different, use a classic mv
+
+    if [[ -e "${_STAR_DATA_HOME}/stars/${rename_dst}" ]]; then
+        err "There is already a star named ${COLOR_STAR}${rename_dst}${COLOR_RESET}."
+        # TODO: add old environment variable back
+        return 2
+    fi
+
+    if ! mv "${_STAR_DATA_HOME}/stars/${rename_src}" "${_STAR_DATA_HOME}/stars/${rename_dst}"; then
+        res=$?
+        err "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+        # TODO: add old environment variable back
+        return $res
+    fi
+
+    out "Renamed star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+    # TODO: add new environment variable back
+
+    return 0
 }
 
 star_mode_remove() {
