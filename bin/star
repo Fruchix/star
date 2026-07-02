@@ -400,12 +400,15 @@ star_mode_add() {
 }
 
 star_mode_list() {
+    echo "Not implemented yet."
+    return 1
     "${_STAR_HOME}/libexec/star/star-list" "$@"
     return $?
 }
 
 star_mode_load() {
-    :
+    echo "Not implemented yet."
+    return 1
 }
 
 star_mode_rename() {
@@ -531,11 +534,13 @@ star_mode_remove() {
 }
 
 star_mode_reset() {
-    :
+    echo "Not implemented yet."
+    return 1
 }
 
 star_mode_config() {
-    :
+    echo "Not implemented yet."
+    return 1
 }
 
 star_mode_help() {
@@ -543,11 +548,13 @@ star_mode_help() {
 }
 
 star_mode_version() {
-    :
+    echo "Not implemented yet."
+    return 1
 }
 
 star_mode_info() {
-    :
+    echo "Not implemented yet."
+    return 1
 }
 
 # in case there are more arguments and it happens to be help option
@@ -653,22 +660,6 @@ get_star_path_from_name() {
 
     return 1
 }
-
-# list_broken_stars
-# echo "---"
-# list_stars_names
-# echo "---"
-# list_stars_paths
-# echo "---"
-# list_stars_names_and_path | column -t
-# echo "---"
-# get_star_path_from_name wikigraph
-# get_star_path_from_name lsqdfjh
-# echo "---"
-# get_star_name_from_path /Users/fruchame/Library/CloudStorage/OneDrive-HewlettPackardEnterprise
-# get_star_name_from_path sdmifhlgsdvbkfj
-# echo "---"
-
 
 ### Specific util functions ###
 
