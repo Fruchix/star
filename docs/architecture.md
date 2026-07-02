@@ -75,6 +75,14 @@ And then:
   - Those scripts are stored in `libexec` and not `lib` because the user shall not execute them directly, only `star` will execute them
   - Files with an `*.sh` extension are meant to be sourced (e.g.: `star-setcolors.sh` sets colors in the current shell environment)
 
+## Using stdout and stderr
+
+The `star` function (wrapper around the `star` script) captures and parses the stdout output of the `star` script in order to execute commands (such as cd, export, unset).
+
+Because of this, writing to stdout (from the script) must be restricted to commands only, all user-oriented messages should be written to stderr, even if the messages are not errors.
+
+For this, the functions `out` and `err` are provided. Both write to stderr, but they functionaly represent respectively a user-oriented message and a user-oriented error message. Any change to ALL classic or error message can be done by modifying those functions.
+
 ## Environment variables
 
 There are a few environment variables that describe star's installation (the software structure), and some others that are used to configure star at run-time. Those environment variables are not to be confused with the dynamicaly set environment variables, which is a feature of star (see [README](../README.md)'s features).
