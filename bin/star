@@ -57,7 +57,7 @@ main() {
 ### usage functions ###
 
 usage() {
-    cat << EOF
+    cat << EOF >&2
 Usage: star [MODE]
        star [OPTION]
 
@@ -92,7 +92,7 @@ EOF
 }
 
 usage_initialize_wrapper_function() {
-    cat << 'EOF'
+    cat << 'EOF' >&2
 WARNING: star is not initialized in your current shell.
 
     To initialize star, run one of the following commands (depending on your shell):
@@ -105,7 +105,7 @@ EOF
 }
 
 usage_init() {
-    cat <<EOF
+    cat <<EOF >&2
 Usage: star init SHELL_TYPE
 Initialize the star environment for the specified shell type.
 
@@ -116,7 +116,7 @@ EOF
 }
 
 usage_add() {
-    cat << EOF
+    cat << EOF >&2
 Usage: star add PATH [NAME]
        star a PATH [NAME]
 
@@ -136,7 +136,7 @@ EOF
 }
 
 usage_list() {
-    cat << EOF
+    cat << EOF >&2
 Usage: star list [OPTIONS]
        star L [OPTIONS]
 
@@ -152,7 +152,7 @@ EOF
 }
 
 usage_load() {
-    cat << EOF
+    cat << EOF >&2
 Usage: star load [STAR]
        star l [STAR]
 
@@ -167,7 +167,7 @@ EOF
 }
 
 usage_rename() {
-    cat << EOF
+    cat << EOF >&2
 Usage: star rename <STAR> <NEW_STAR_NAME>
        star mv <STAR> <NEW_STAR_NAME>
 
@@ -184,7 +184,7 @@ EOF
 }
 
 usage_remove() {
-    cat << EOF
+    cat << EOF >&2
 Usage: star remove <STAR> [STAR]...
        star rm <STAR> [STAR]...
 
@@ -196,7 +196,7 @@ EOF
 }
 
 usage_reset() {
-    cat << EOF
+    cat << EOF >&2
 Usage: star reset [-f|--force]
 
 Remove all stars and the ".star" directory.
@@ -207,7 +207,7 @@ EOF
 }
 
 usage_config() {
-    cat << EOF
+    cat << EOF >&2
 Usage: star config
 
 Open the star configuration file in a terminal text editor then apply the updated configuration.
@@ -391,7 +391,7 @@ star_mode_add() {
         err "star add: failed to add a new starred directory: ${COLOR_STAR}${dst_name//${STAR_NAMES_SEPARATOR}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
         return $res
     fi
-    echo -e "Added new starred directory: ${COLOR_STAR}${dst_name//${STAR_NAMES_SEPARATOR}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
+    out "Added new starred directory: ${COLOR_STAR}${dst_name//${STAR_NAMES_SEPARATOR}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
 
     # update environment variables
     # if [[ "$__STAR_ENABLE_ENVVARS" == "yes" ]]; then
@@ -441,7 +441,7 @@ star_mode_remove() {
                 err "star remove: Failed to remove starred directory: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
                 return $res
             fi
-            echo -e "Removed starred directory: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
+            out "Removed starred directory: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
         else
             err "star remove: Could not find any starred directory with the name: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
             return 1
@@ -671,6 +671,10 @@ replace_separator_by_slashes() {
 
 
 ### Generic util functions ###
+
+out() {
+    echo -e "$*" >&2 
+}
 
 err() {
     echo -e "$*" >&2
