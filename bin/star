@@ -663,7 +663,9 @@ get_star_path_from_name() {
 
 ### Specific util functions ###
 
-display_version() {
+# get_version
+#   Do not call directly to output version in terminal. Use: out "$(get_version)"
+get_version() {
     local version
     version="$(cat "${_STAR_HOME}/share/star/VERSION" 2>/dev/null || echo "unknown")"
     echo "${version}"
