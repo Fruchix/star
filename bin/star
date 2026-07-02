@@ -18,6 +18,8 @@ COLOR_STAR="${__STAR_COLOR_NAME}"
 COLOR_PATH="${__STAR_COLOR_PATH}"
 COLOR_RESET="$__STAR_COLOR_RESET"
 
+DATAPATH_STARS="${_STAR_DATA_HOME}/stars"
+
 # main
 main() {
     if [[ $# -eq 0 ]]; then
@@ -302,8 +304,8 @@ star_mode_add() {
 
     local dst_name dst_name_with_slashes dst_basename existing_star
 
-    if [[ ! -d "${_STAR_DATA_HOME}/stars" ]]; then
-        mkdir -p "${_STAR_DATA_HOME}/stars"
+    if [[ ! -d "${DATAPATH_STARS}" ]]; then
+        mkdir -p "${DATAPATH_STARS}"
     fi
 
     if [[ ! "${star_to_store}" == "" ]]; then
@@ -346,7 +348,7 @@ star_mode_add() {
         local tmp_name
         tmp_name=$(echo "${dst_name}" | tr --squeeze-repeats ' ' | tr ' ' '-')
 
-        while [[ -e "${_STAR_DATA_HOME}/stars/${tmp_name}" ]]; do
+        while [[ -e "${DATAPATH_STARS}/${tmp_name}" ]]; do
             dst_name_with_slashes="$(replace_separator_by_slashes "$dst_name")"
             dst_basename=$(basename "${src_dir%%"$dst_name_with_slashes"}")
 
@@ -369,7 +371,7 @@ star_mode_add() {
         dst_name=$(echo "${dst_name}" | tr --squeeze-repeats ' ' | tr ' ' '-')
 
         dst_name_with_slashes="$(replace_separator_by_slashes "$dst_name")"
-        if [[ -e "${_STAR_DATA_HOME}/stars/${dst_name}" ]]; then
+        if [[ -e "${DATAPATH_STARS}/${dst_name}" ]]; then
             # Get the path associated with star name
             local target_path
             
@@ -386,7 +388,7 @@ star_mode_add() {
         dst_name="dir-${dst_name}"
     fi
 
-    if ! ln -s "${src_dir}" "${_STAR_DATA_HOME}/stars/${dst_name}"; then
+    if ! ln -s "${src_dir}" "${DATAPATH_STARS}/${dst_name}"; then
         local res=$?
         err "star add: failed to add a new starred directory: ${COLOR_STAR}${dst_name//${STAR_NAMES_SEPARATOR}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
         return $res
@@ -423,7 +425,7 @@ star_mode_rename() {
 
 
     local res
-    if [[ ! -e "${_STAR_DATA_HOME}/stars/${rename_src}" ]]; then
+    if [[ ! -e "${DATAPATH_STARS}/${rename_src}" ]]; then
         err "star rename: Star ${COLOR_STAR}${rename_src}${COLOR_RESET} does not exist."
         return 1
     fi
@@ -436,13 +438,13 @@ star_mode_rename() {
         # try to find a random temporary name that does not exist without using tools like mktemp (less dependencies)
         local random_suffix_attempts=3
         local random_suffix="$RANDOM"
-        while [[ -e "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}" && $random_suffix_attempts -gt 0 ]]; do
+        while [[ -e "${DATAPATH_STARS}/${rename_dst}.${random_suffix}" && $random_suffix_attempts -gt 0 ]]; do
             random_suffix="$random_suffix$RANDOM"
             ((random_suffix_attempts--))
         done
 
         # temporary rename
-        if ! mv "${_STAR_DATA_HOME}/stars/${rename_src}" "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}"; then
+        if ! mv "${DATAPATH_STARS}/${rename_src}" "${DATAPATH_STARS}/${rename_dst}.${random_suffix}"; then
             res=$?
             err "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET}."
             err "This temporary name is because the two names are the same except for case, and would have been renamed to the final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
@@ -452,10 +454,10 @@ star_mode_rename() {
         fi
 
         # final rename
-        if ! mv "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}" "${_STAR_DATA_HOME}/stars/${rename_dst}"; then
+        if ! mv "${DATAPATH_STARS}/${rename_dst}.${random_suffix}" "${DATAPATH_STARS}/${rename_dst}"; then
             res=$?
             # if final rename failed, try to revert it
-            if ! mv "${_STAR_DATA_HOME}/stars/${rename_dst}.${random_suffix}" "${_STAR_DATA_HOME}/stars/${rename_src}"; then
+            if ! mv "${DATAPATH_STARS}/${rename_dst}.${random_suffix}" "${DATAPATH_STARS}/${rename_src}"; then
                 res=$?
                 err "Failed to rename star from temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET} to final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
                 err "This temporary rename was used because the two names were the same except for the case. The temporary rename worked, but the final rename AND it revert to original name both failed."
@@ -475,13 +477,13 @@ star_mode_rename() {
 
     # else if the old and new names are different, use a classic mv
 
-    if [[ -e "${_STAR_DATA_HOME}/stars/${rename_dst}" ]]; then
+    if [[ -e "${DATAPATH_STARS}/${rename_dst}" ]]; then
         err "There is already a star named ${COLOR_STAR}${rename_dst}${COLOR_RESET}."
         # TODO: add old environment variable back
         return 2
     fi
 
-    if ! mv "${_STAR_DATA_HOME}/stars/${rename_src}" "${_STAR_DATA_HOME}/stars/${rename_dst}"; then
+    if ! mv "${DATAPATH_STARS}/${rename_src}" "${DATAPATH_STARS}/${rename_dst}"; then
         res=$?
         err "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
         # TODO: add old environment variable back
@@ -508,7 +510,7 @@ star_mode_remove() {
     done
 
     local star_name
-    if [[ ! -d "${_STAR_DATA_HOME}/stars" || -z "$(ls -A "${_STAR_DATA_HOME}/stars" )" ]];then
+    if [[ ! -d "${DATAPATH_STARS}" || -z "$(ls -A "${DATAPATH_STARS}" )" ]];then
         err "star remove: there are no starred directories to remove."
         return 1
     fi
@@ -517,8 +519,8 @@ star_mode_remove() {
     # _star_unset_variables
 
     for star_name in "${stars_to_remove[@]}"; do
-        if [[ -e "${_STAR_DATA_HOME}/stars/${star_name}" ]]; then
-            if ! rm "${_STAR_DATA_HOME}/stars/${star_name}"; then
+        if [[ -e "${DATAPATH_STARS}/${star_name}" ]]; then
+            if ! rm "${DATAPATH_STARS}/${star_name}"; then
                 local res=$?
                 err "star remove: Failed to remove starred directory: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
                 return $res
