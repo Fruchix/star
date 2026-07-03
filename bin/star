@@ -446,8 +446,8 @@ star_mode_rename() {
         # temporary rename
         if ! mv "${DATAPATH_STARS}/${rename_src}" "${DATAPATH_STARS}/${rename_dst}.${random_suffix}"; then
             res=$?
-            err "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET}."
-            err "This temporary name is because the two names are the same except for case, and would have been renamed to the final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+            err "star rename: Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET}."
+            err "star rename: This temporary name is because the two names are the same except for case, and would have been renamed to the final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
 
             # TODO: add environment variable back
             return $res
@@ -459,12 +459,12 @@ star_mode_rename() {
             # if final rename failed, try to revert it
             if ! mv "${DATAPATH_STARS}/${rename_dst}.${random_suffix}" "${DATAPATH_STARS}/${rename_src}"; then
                 res=$?
-                err "Failed to rename star from temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET} to final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
-                err "This temporary rename was used because the two names were the same except for the case. The temporary rename worked, but the final rename AND it revert to original name both failed."
-                err "Good luck, bye!"
+                err "star rename: Failed to rename star from temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET} to final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                err "star rename: This temporary rename was used because the two names were the same except for the case. The temporary rename worked, but the final rename AND it revert to original name both failed."
+                err "star rename: Good luck, bye!"
                 return $res
             else
-                err "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                err "star rename: Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
                 # TODO: add environment variable back
                 return $res
             fi
@@ -478,14 +478,14 @@ star_mode_rename() {
     # else if the old and new names are different, use a classic mv
 
     if [[ -e "${DATAPATH_STARS}/${rename_dst}" ]]; then
-        err "There is already a star named ${COLOR_STAR}${rename_dst}${COLOR_RESET}."
+        err "star rename: There is already a star named ${COLOR_STAR}${rename_dst}${COLOR_RESET}."
         # TODO: add old environment variable back
         return 2
     fi
 
     if ! mv "${DATAPATH_STARS}/${rename_src}" "${DATAPATH_STARS}/${rename_dst}"; then
         res=$?
-        err "Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+        err "star rename: Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
         # TODO: add old environment variable back
         return $res
     fi
