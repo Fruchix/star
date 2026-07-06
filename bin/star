@@ -20,41 +20,188 @@ COLOR_RESET="$__STAR_COLOR_RESET"
 
 DATAPATH_STARS="${_STAR_DATA_HOME}/stars"
 
-# main
-main() {
-    if [[ $# -eq 0 ]]; then
-        usage >&2
-        return 1
-    fi
 
-    # set necessary env vars (functions will not overwrite if already defined)
-    set_star_home
-    set_star_config_home
-    set_star_config_file
-    set_star_data_home
+### Generic util functions ###
 
-    # parse the mode
-    local arg_mode=$1
-    shift
-    case $arg_mode in
-        init)               star_mode_init "$@" ;;
-        add)                star_mode_add "$@"  ;;
-        L|list)             star_mode_list "$@" ;;
-        l|load)             star_mode_load "$@" ;;
-        mv|rename)          star_mode_rename "$@" ;;
-        rm|remove)          star_mode_remove "$@" ;;
-        reset)              star_mode_reset "$@" ;;
-        config)             star_mode_config "$@" ;;
-        h|help|-h|--help)   star_mode_help "$@" ;;
-        -v|--version)       star_mode_version "$@" ;;
-        -I|--info)          star_mode_info "$@";;
-        *)
-            err "star: invalid mode '$arg_mode'"
-            usage >&2
-            return 1
-            ;;
-    esac
+out() {
+    echo -e "$*" >&2 
 }
+
+err() {
+    echo -e "$*" >&2
+}
+
+err_star_unloaded() {
+    err "star is not loaded. Please run 'eval \"\$(command star init bash)\"' to load star."
+}
+
+
+### Specific util functions ###
+
+# get_version
+#   Do not call directly to output version in terminal. Use: out "$(get_version)"
+get_version() {
+    local version
+    version="$(cat "${_STAR_HOME}/share/star/VERSION" 2>/dev/null || echo "unknown")"
+    echo "${version}"
+}
+
+set_star_home() {
+    if [[ -z "${_STAR_HOME}" ]]; then
+        local script_dir
+        # the "realpath ${BASH_SOURCE[0]}" is for the case where there is a symlink to this file,
+        # we want to resolve it to find the actual installation directory
+        script_dir="$(realpath "$( cd -- "$( dirname -- "$(realpath "${BASH_SOURCE[0]}")" )" && pwd )")"
+
+        # star is expected to be located at: <installation_dir>/bin/star
+        installation_dir="$(realpath "$script_dir/..")"
+        if [[ "${installation_dir}/bin" != "$script_dir" ]]; then
+            err "star program should be located in a \"bin\" directory."
+            return 1
+        fi
+
+        export _STAR_HOME="$installation_dir"
+    fi
+}
+
+set_star_config_home() {
+    # Where to search for user-specific config files (in this case, starred directory)
+    # By default, use _STAR_CONFIG_HOME if it is already set,
+    # else try to use XDG_CONFIG_HOME, 
+    # else search at $HOME/.config
+    #
+    # In each case, a sub-directory "star" is created
+    if [[ -z "${_STAR_CONFIG_HOME}" ]]; then
+        if [[ -n "${XDG_CONFIG_HOME}" ]]; then
+            export _STAR_CONFIG_HOME="${XDG_CONFIG_HOME}/star"
+        else
+            export _STAR_CONFIG_HOME="$HOME/.config/star"
+        fi
+    fi
+}
+
+set_star_config_file() {
+    # Path to the star configuration file
+    # By default, use _STAR_CONFIG_FILE if it is already set,
+    # else use "${_STAR_CONFIG_HOME}/star_config.sh"
+    export _STAR_CONFIG_FILE=${_STAR_CONFIG_FILE:-"${_STAR_CONFIG_HOME?}/star_config.sh"}
+}
+
+set_star_data_home() {
+    # Where to search for user-specific data (in this case, starred directory)
+    # By default, use _STAR_DATA_HOME if it is already set,
+    # else try to use XDG_DATA_HOME, 
+    # else search at $HOME/.local/share
+    #
+    # In each case, a sub-directory "star" is created
+    if [[ -z "${_STAR_DATA_HOME}" ]]; then
+        if [[ -n "${XDG_DATA_HOME}" ]]; then
+            export _STAR_DATA_HOME="${XDG_DATA_HOME}/star"
+        else
+            export _STAR_DATA_HOME="$HOME/.local/share/star"
+        fi
+    fi
+}
+
+# function to replace slashes by the separator
+replace_slashes_by_separator() {
+    local name_with_slashes="$1"
+    echo "${name_with_slashes//\//${STAR_NAMES_SEPARATOR}}"
+}
+
+# replace separator by slashes
+# should be used in command substitution due to the echo
+replace_separator_by_slashes() {
+    local name_with_separator="$1"
+    echo "${name_with_separator//${STAR_NAMES_SEPARATOR}//}"
+}
+
+
+### listing functions ###
+
+# list_broken_stars
+list_broken_stars() {
+    local current_dir="$PWD"
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        # skip each star in which we can cd
+        cd -P "$f" &>/dev/null && continue
+        replace_separator_by_slashes "$f"
+    done
+
+    cd "$current_dir" || return 2
+}
+
+# list_stars_names
+list_stars_names() {
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        replace_separator_by_slashes "$f"
+    done
+}
+
+# list_stars_paths
+list_stars_paths() {
+    local current_dir="$PWD"
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        cd -P "$f" &>/dev/null || continue
+        echo "$PWD"
+    done
+
+    cd "$current_dir" || return 2
+}
+
+# list_stars_names_and_path
+list_stars_names_and_path() {
+    local current_dir="$PWD"
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        cd -P "$f" &>/dev/null || continue
+        echo "$(replace_separator_by_slashes "$f") $PWD"
+    done
+
+    cd "$current_dir" || return 2
+}
+
+# list_stars_custom_format
+
+get_star_name_from_path() {
+    local given_star_path="$1"
+
+    local current_dir="$PWD"
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        cd -P "$f" &>/dev/null || continue
+        if [[ "$PWD" == "$given_star_path" ]]; then
+            replace_separator_by_slashes "$f"
+            cd "$current_dir" || return 2
+            return 0
+        fi
+    done
+
+    cd "$current_dir" || return 2
+    return 1
+}
+
+get_star_path_from_name() {
+    local given_star_name="$1"
+
+    local current_dir
+    local f
+    for f in "$_STAR_DATA_HOME"/stars/*; do
+        if [[ "$(replace_separator_by_slashes "$f")" == "$given_star_name" ]]; then
+            current_dir="$PWD"
+            cd -P "$f" &>/dev/null ||  continue
+            echo "${PWD}"
+            cd "$current_dir" || return 2
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 
 ### usage functions ###
 
@@ -578,187 +725,42 @@ check_wrapper_function_initialized() {
     declare -F | grep "^declare -fx star$" > /dev/null
 }
 
-### listing functions ###
 
-# list_broken_stars
-list_broken_stars() {
-    local current_dir="$PWD"
-    local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
-        # skip each star in which we can cd
-        cd -P "$f" &>/dev/null && continue
-        replace_separator_by_slashes "$f"
-    done
+### main ###
 
-    cd "$current_dir" || return 2
-}
+main() {
+    if [[ $# -eq 0 ]]; then
+        usage >&2
+        return 1
+    fi
 
-# list_stars_names
-list_stars_names() {
-    local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
-        replace_separator_by_slashes "$f"
-    done
-}
+    # set necessary env vars (functions will not overwrite if already defined)
+    set_star_home
+    set_star_config_home
+    set_star_config_file
+    set_star_data_home
 
-# list_stars_paths
-list_stars_paths() {
-    local current_dir="$PWD"
-    local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
-        cd -P "$f" &>/dev/null || continue
-        echo "$PWD"
-    done
-
-    cd "$current_dir" || return 2
-}
-
-# list_stars_names_and_path
-list_stars_names_and_path() {
-    local current_dir="$PWD"
-    local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
-        cd -P "$f" &>/dev/null || continue
-        echo "$(replace_separator_by_slashes "$f") $PWD"
-    done
-
-    cd "$current_dir" || return 2
-}
-
-# list_stars_custom_format
-
-get_star_name_from_path() {
-    local given_star_path="$1"
-
-    local current_dir="$PWD"
-    local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
-        cd -P "$f" &>/dev/null || continue
-        if [[ "$PWD" == "$given_star_path" ]]; then
-            replace_separator_by_slashes "$f"
-            cd "$current_dir" || return 2
-            return 0
-        fi
-    done
-
-    cd "$current_dir" || return 2
-    return 1
-}
-
-get_star_path_from_name() {
-    local given_star_name="$1"
-
-    local current_dir
-    local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
-        if [[ "$(replace_separator_by_slashes "$f")" == "$given_star_name" ]]; then
-            current_dir="$PWD"
-            cd -P "$f" &>/dev/null ||  continue
-            echo "${PWD}"
-            cd "$current_dir" || return 2
-            return 0
-        fi
-    done
-
-    return 1
-}
-
-### Specific util functions ###
-
-# get_version
-#   Do not call directly to output version in terminal. Use: out "$(get_version)"
-get_version() {
-    local version
-    version="$(cat "${_STAR_HOME}/share/star/VERSION" 2>/dev/null || echo "unknown")"
-    echo "${version}"
-}
-
-set_star_home() {
-    if [[ -z "${_STAR_HOME}" ]]; then
-        local script_dir
-        # the "realpath ${BASH_SOURCE[0]}" is for the case where there is a symlink to this file,
-        # we want to resolve it to find the actual installation directory
-        script_dir="$(realpath "$( cd -- "$( dirname -- "$(realpath "${BASH_SOURCE[0]}")" )" && pwd )")"
-
-        # star is expected to be located at: <installation_dir>/bin/star
-        installation_dir="$(realpath "$script_dir/..")"
-        if [[ "${installation_dir}/bin" != "$script_dir" ]]; then
-            err "star program should be located in a \"bin\" directory."
+    # parse the mode
+    local arg_mode=$1
+    shift
+    case $arg_mode in
+        init)               star_mode_init "$@" ;;
+        add)                star_mode_add "$@"  ;;
+        L|list)             star_mode_list "$@" ;;
+        l|load)             star_mode_load "$@" ;;
+        mv|rename)          star_mode_rename "$@" ;;
+        rm|remove)          star_mode_remove "$@" ;;
+        reset)              star_mode_reset "$@" ;;
+        config)             star_mode_config "$@" ;;
+        h|help|-h|--help)   star_mode_help "$@" ;;
+        -v|--version)       star_mode_version "$@" ;;
+        -I|--info)          star_mode_info "$@";;
+        *)
+            err "star: invalid mode '$arg_mode'"
+            usage >&2
             return 1
-        fi
-
-        export _STAR_HOME="$installation_dir"
-    fi
+            ;;
+    esac
 }
-
-set_star_config_home() {
-    # Where to search for user-specific config files (in this case, starred directory)
-    # By default, use _STAR_CONFIG_HOME if it is already set,
-    # else try to use XDG_CONFIG_HOME, 
-    # else search at $HOME/.config
-    #
-    # In each case, a sub-directory "star" is created
-    if [[ -z "${_STAR_CONFIG_HOME}" ]]; then
-        if [[ -n "${XDG_CONFIG_HOME}" ]]; then
-            export _STAR_CONFIG_HOME="${XDG_CONFIG_HOME}/star"
-        else
-            export _STAR_CONFIG_HOME="$HOME/.config/star"
-        fi
-    fi
-}
-
-set_star_config_file() {
-    # Path to the star configuration file
-    # By default, use _STAR_CONFIG_FILE if it is already set,
-    # else use "${_STAR_CONFIG_HOME}/star_config.sh"
-    export _STAR_CONFIG_FILE=${_STAR_CONFIG_FILE:-"${_STAR_CONFIG_HOME?}/star_config.sh"}
-}
-
-set_star_data_home() {
-    # Where to search for user-specific data (in this case, starred directory)
-    # By default, use _STAR_DATA_HOME if it is already set,
-    # else try to use XDG_DATA_HOME, 
-    # else search at $HOME/.local/share
-    #
-    # In each case, a sub-directory "star" is created
-    if [[ -z "${_STAR_DATA_HOME}" ]]; then
-        if [[ -n "${XDG_DATA_HOME}" ]]; then
-            export _STAR_DATA_HOME="${XDG_DATA_HOME}/star"
-        else
-            export _STAR_DATA_HOME="$HOME/.local/share/star"
-        fi
-    fi
-}
-
-# function to replace slashes by the separator
-replace_slashes_by_separator() {
-    local name_with_slashes="$1"
-    echo "${name_with_slashes//\//${STAR_NAMES_SEPARATOR}}"
-}
-
-# replace separator by slashes
-# should be used in command substitution due to the echo
-replace_separator_by_slashes() {
-    local name_with_separator="$1"
-    echo "${name_with_separator//${STAR_NAMES_SEPARATOR}//}"
-}
-
-
-### Generic util functions ###
-
-out() {
-    echo -e "$*" >&2 
-}
-
-err() {
-    echo -e "$*" >&2
-}
-
-err_star_unloaded() {
-    err "star is not loaded. Please run 'eval \"\$(command star init bash)\"' to load star."
-}
-
-
-### Entry point ###
 
 main "$@"
