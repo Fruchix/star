@@ -510,7 +510,7 @@ star_mode_add() {
         done
         # replace whitespaces with a single dash (needs to be done AFTER looping over paths, to keep the existing paths)
         dst_name=$(echo "${dst_name}" | tr --squeeze-repeats ' ' | tr ' ' '-')
-
+        dst_name_with_slashes="$(replace_separator_by_slashes "$dst_name")"
     # When adding a new starred directory with a given name (as argument),
     # then the name should not already exist
     else
@@ -521,11 +521,10 @@ star_mode_add() {
         if [[ -e "${DATAPATH_STARS}/${dst_name}" ]]; then
             # Get the path associated with star name
             local target_path
-            
-            target_path=$(get_star_path_from_name "${dst_name//\//${STAR_NAMES_SEPARATOR}}")
-            target_path=$("${_STAR_HOME}/libexec/star/star-list" --get-path="${dst_name//\//${STAR_NAMES_SEPARATOR}}")
 
-            err "star add: a directory is already starred with the name \"${dst_name_with_slashes}\": ${COLOR_STAR}${dst_name_with_slashes}${COLOR_RESET} -> ${COLOR_PATH}${target_path}${COLOR_RESET}."
+            target_path=$(get_star_path_from_name "$dst_name")
+
+            err "star add: a directory is already starred with the name '${dst_name_with_slashes}': ${COLOR_STAR}${dst_name_with_slashes}${COLOR_RESET} -> ${COLOR_PATH}${target_path}${COLOR_RESET}."
             return 2
         fi
     fi
@@ -537,10 +536,10 @@ star_mode_add() {
 
     if ! ln -s "${src_dir}" "${DATAPATH_STARS}/${dst_name}"; then
         local res=$?
-        err "star add: failed to add a new starred directory: ${COLOR_STAR}${dst_name//${STAR_NAMES_SEPARATOR}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
+        err "star add: failed to add a new starred directory: ${COLOR_STAR}${dst_name_with_slashes}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
         return $res
     fi
-    out "Added new starred directory: ${COLOR_STAR}${dst_name//${STAR_NAMES_SEPARATOR}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
+    out "Added new starred directory: ${COLOR_STAR}${dst_name_with_slashes}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
 
     # update environment variables
     # if [[ "$__STAR_ENABLE_ENVVARS" == "yes" ]]; then
