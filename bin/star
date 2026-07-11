@@ -555,8 +555,74 @@ star_mode_list() {
 }
 
 star_mode_load() {
-    echo "Not implemented yet."
-    return 1
+    # first argument should be the name or the index of the star to load
+    if [[ $# -lt 1 ]]; then
+        # if the following option is enabled, using star load without argument is equivalent to star list
+        if [[ "$ENABLE_LOADLISTS" == "yes" ]]; then
+            star_mode_list
+            return $?
+        fi
+
+        err "star load: missing argument."
+        usage_load
+        return 1
+    fi
+    local star_to_load
+    star_to_load="$(replace_slashes_by_separator "$1")"
+
+    if [[ ! -d "${DATAPATH_STARS}" ]]; then
+        err "star load: No star can be loaded because there are no starred directories."
+        return 0
+    fi
+
+    # Check if argument is purely numeric
+    if [[ "${star_to_load}" =~ ^[0-9]+$ ]]; then
+        # Get the list of star names
+        local stars_list=()
+        while IFS= read -r; do
+            stars_list+=("$REPLY")
+        done < <("${_STAR_HOME}/libexec/star/star-list" --names) # TODO: pass sorting parameters to star-list
+        # TODO: use listing function
+
+        # Check if the index is valid
+        if [[ "${star_to_load}" -lt 1 || "${star_to_load}" -gt "${#stars_list[@]}" ]]; then
+            err "star load: Invalid index '${COLOR_STAR}${star_to_load}${COLOR_RESET}'. Valid range is 1-${#stars_list[@]}."
+            return 2
+        fi
+
+        # revert the indexes on descending index
+        # (the end of the list corresponds to index 1)
+        if [[ "$__STAR_LIST_INDEX" == "desc" ]]; then
+            star_to_load=$(( ${#stars_list[@]} - star_to_load + 1 ))
+        fi
+
+        star_to_load="${stars_list[$((star_to_load-1))]}"
+        out "Loading star by index: ${COLOR_STAR}${star_to_load}${COLOR_RESET}."
+    fi
+
+    if [[ ! -e "${DATAPATH_STARS}/${star_to_load}" ]]; then
+        err "star load: Star ${COLOR_STAR}$(replace_separator_by_slashes "$star_to_load")${COLOR_RESET} does not exist."
+    else
+        # not using "command" before cd in case user has customized its cd,
+        # and has shadowed the original cd command
+        if ! cd -P "${DATAPATH_STARS}/${star_to_load}"; then
+            # get path according to name
+            local star_to_load_path
+            star_to_load_path="$(get_star_path_from_name "$star_to_load")"
+
+            if [[ ! -d "$star_to_load_path" ]]; then
+                err "star load: Failed to load star with name \"${COLOR_STAR}${star_to_load}${COLOR_RESET}\": associated directory \"${COLOR_PATH}${star_to_load_path}${COLOR_RESET}\" does not exist."
+                return 2
+            else
+                err "star load: Failed to load star with name \"${COLOR_STAR}${star_to_load}${COLOR_RESET}\"."
+                return 2
+            fi
+        fi
+
+        echo "cd -P ${DATAPATH_STARS}/${star_to_load}"
+        # update access time
+        touch -ah "${DATAPATH_STARS}/${star_to_load}"
+    fi
 }
 
 star_mode_rename() {
