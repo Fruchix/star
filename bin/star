@@ -566,8 +566,8 @@ star_mode_rename() {
         return 1
     fi
     local rename_src rename_dst
-    rename_src="${1//\//${star_dir_separator}}"
-    rename_dst="${2//\//${star_dir_separator}}"
+    rename_src="$(replace_slashes_by_separator "$1")"
+    rename_dst="$(replace_slashes_by_separator "$2")"
 
 
     local res
@@ -592,8 +592,8 @@ star_mode_rename() {
         # temporary rename
         if ! mv "${DATAPATH_STARS}/${rename_src}" "${DATAPATH_STARS}/${rename_dst}.${random_suffix}"; then
             res=$?
-            err "star rename: Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET}."
-            err "star rename: This temporary name is because the two names are the same except for case, and would have been renamed to the final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+            err "star rename: Failed to rename star ${COLOR_STAR}$(replace_separator_by_slashes "$rename_src")${COLOR_RESET} to temporary name ${COLOR_STAR}$(replace_separator_by_slashes "$rename_dst").${random_suffix}${COLOR_RESET}."
+            err "star rename: This temporary name is because the two names are the same except for case, and would have been renamed to the final name ${COLOR_STAR}$(replace_separator_by_slashes "$rename_dst")${COLOR_RESET}."
 
             # TODO: add environment variable back
             return $res
@@ -605,18 +605,18 @@ star_mode_rename() {
             # if final rename failed, try to revert it
             if ! mv "${DATAPATH_STARS}/${rename_dst}.${random_suffix}" "${DATAPATH_STARS}/${rename_src}"; then
                 res=$?
-                err "star rename: Failed to rename star from temporary name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}.${random_suffix}${COLOR_RESET} to final name ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                err "star rename: Failed to rename star from temporary name ${COLOR_STAR}$(replace_separator_by_slashes "$rename_dst").${random_suffix}${COLOR_RESET} to final name ${COLOR_STAR}$(replace_separator_by_slashes "$rename_dst")${COLOR_RESET}."
                 err "star rename: This temporary rename was used because the two names were the same except for the case. The temporary rename worked, but the final rename AND it revert to original name both failed."
                 err "star rename: Good luck, bye!"
                 return $res
             else
-                err "star rename: Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                err "star rename: Failed to rename star ${COLOR_STAR}$(replace_separator_by_slashes "$rename_src")${COLOR_RESET} to ${COLOR_STAR}$(replace_separator_by_slashes "$rename_dst")${COLOR_RESET}."
                 # TODO: add environment variable back
                 return $res
             fi
         fi
 
-        out "Renamed star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+        out "Renamed star ${COLOR_STAR}$(replace_separator_by_slashes "$rename_src")${COLOR_RESET} to ${COLOR_STAR}$(replace_separator_by_slashes "$rename_dst")${COLOR_RESET}."
         # TODO: add environment variable back
         return 0
     fi
@@ -624,19 +624,19 @@ star_mode_rename() {
     # else if the old and new names are different, use a classic mv
 
     if [[ -e "${DATAPATH_STARS}/${rename_dst}" ]]; then
-        err "star rename: There is already a star named ${COLOR_STAR}${rename_dst}${COLOR_RESET}."
+        err "star rename: There is already a star named ${COLOR_STAR}$(replace_separator_by_slashes "$rename_dst")${COLOR_RESET}."
         # TODO: add old environment variable back
         return 2
     fi
 
     if ! mv "${DATAPATH_STARS}/${rename_src}" "${DATAPATH_STARS}/${rename_dst}"; then
         res=$?
-        err "star rename: Failed to rename star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+        err "star rename: Failed to rename star ${COLOR_STAR}$(replace_separator_by_slashes "$rename_src")${COLOR_RESET} to ${COLOR_STAR}$(replace_separator_by_slashes "$rename_dst")${COLOR_RESET}."
         # TODO: add old environment variable back
         return $res
     fi
 
-    out "Renamed star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+    out "Renamed star ${COLOR_STAR}$(replace_separator_by_slashes "$rename_src")${COLOR_RESET} to ${COLOR_STAR}$(replace_separator_by_slashes "$rename_dst")${COLOR_RESET}."
     # TODO: add new environment variable back
 
     return 0
@@ -668,12 +668,12 @@ star_mode_remove() {
         if [[ -e "${DATAPATH_STARS}/${star_name}" ]]; then
             if ! rm "${DATAPATH_STARS}/${star_name}"; then
                 local res=$?
-                err "star remove: Failed to remove starred directory: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
+                err "star remove: Failed to remove starred directory '${COLOR_STAR}$(replace_separator_by_slashes "${star_name}")${COLOR_RESET}'."
                 return $res
             fi
-            out "Removed starred directory: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
+            out "Removed starred directory: ${COLOR_STAR}$(replace_separator_by_slashes "${star_name}")${COLOR_RESET}."
         else
-            err "star remove: Could not find any starred directory with the name: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
+            err "star remove: Could not find any starred directory with the name '${COLOR_STAR}$(replace_separator_by_slashes "${star_name}")${COLOR_RESET}'."
             return 1
         fi
     done
