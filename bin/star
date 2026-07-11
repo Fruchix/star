@@ -123,10 +123,10 @@ replace_separator_by_slashes() {
 list_broken_stars() {
     local current_dir="$PWD"
     local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
+    for f in "${DATAPATH_STARS}"/*; do
         # skip each star in which we can cd
         cd -P "$f" &>/dev/null && continue
-        replace_separator_by_slashes "$f"
+        replace_separator_by_slashes "${f#"${DATAPATH_STARS}/"}"
     done
 
     cd "$current_dir" || return 2
@@ -135,8 +135,8 @@ list_broken_stars() {
 # list_stars_names
 list_stars_names() {
     local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
-        replace_separator_by_slashes "$f"
+    for f in "${DATAPATH_STARS}"/*; do
+        replace_separator_by_slashes "${f#"${DATAPATH_STARS}/"}"
     done
 }
 
@@ -144,7 +144,7 @@ list_stars_names() {
 list_stars_paths() {
     local current_dir="$PWD"
     local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
+    for f in "${DATAPATH_STARS}"/*; do
         cd -P "$f" &>/dev/null || continue
         echo "$PWD"
     done
@@ -156,9 +156,9 @@ list_stars_paths() {
 list_stars_names_and_path() {
     local current_dir="$PWD"
     local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
+    for f in "${DATAPATH_STARS}"/*; do
         cd -P "$f" &>/dev/null || continue
-        echo "$(replace_separator_by_slashes "$f") $PWD"
+        echo "$(replace_separator_by_slashes "${f#"${DATAPATH_STARS}/"}") $PWD"
     done
 
     cd "$current_dir" || return 2
@@ -171,7 +171,7 @@ get_star_name_from_path() {
 
     local current_dir="$PWD"
     local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
+    for f in "${DATAPATH_STARS}"/*; do
         cd -P "$f" &>/dev/null || continue
         if [[ "$PWD" == "$given_star_path" ]]; then
             replace_separator_by_slashes "$f"
@@ -189,7 +189,7 @@ get_star_path_from_name() {
 
     local current_dir
     local f
-    for f in "$_STAR_DATA_HOME"/stars/*; do
+    for f in "${DATAPATH_STARS}"/*; do
         if [[ "$(replace_separator_by_slashes "$f")" == "$given_star_name" ]]; then
             current_dir="$PWD"
             cd -P "$f" &>/dev/null ||  continue
