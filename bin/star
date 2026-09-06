@@ -35,6 +35,17 @@ err_star_unloaded() {
     err "star is not loaded. Please run 'eval \"\$(command star init bash)\"' to load star."
 }
 
+# Usage: check_help_option_provided "$@"
+# Returns: 0 if the "--help"/"-h" option is in the args else 1
+check_help_option_provided() {
+    while [[ $# -gt 0 ]]; do
+        if [[ "$1" == "-h" || "$1" == "--help" ]]; then
+            return 0
+        fi
+        shift
+    done
+    return 1
+}
 
 ### Specific util functions ###
 
@@ -481,9 +492,6 @@ star_mode_add() {
         shift
     fi
 
-    # process other params
-    check_help_option_provided "add" "$@"
-
     local dst_name dst_name_with_slashes dst_basename existing_star
 
     if [[ ! -d "${DATAPATH_STARS}" ]]; then
@@ -806,20 +814,6 @@ star_mode_info() {
     return 1
 }
 
-# in case there are more arguments and it happens to be help option
-check_help_option_provided() {
-    local mode="$1"
-
-    shift
-    while [[ $# -gt 0 ]]; do
-        if [[ "$1" == "-h" || "$1" == "--help" ]]; then
-            usage_"$mode"
-            return 0
-        fi
-        shift
-    done
-}
-
 check_wrapper_function_initialized() {
     # check if a star function was initialized (had to be exported like 'export -f <function>')
     declare -F | grep "^declare -fx star$" > /dev/null
@@ -842,25 +836,35 @@ main() {
 
     # parse the mode
     local arg_mode=$1
+    local arg_mode_unified=""
     shift
     case $arg_mode in
-        init)               star_mode_init "$@" ;;
-        add)                star_mode_add "$@"  ;;
-        L|list)             star_mode_list "$@" ;;
-        l|load)             star_mode_load "$@" ;;
-        mv|rename)          star_mode_rename "$@" ;;
-        rm|remove)          star_mode_remove "$@" ;;
-        reset)              star_mode_reset "$@" ;;
-        config)             star_mode_config "$@" ;;
-        h|help|-h|--help)   star_mode_help "$@" ;;
-        -v|--version)       star_mode_version "$@" ;;
-        -I|--info)          star_mode_info "$@";;
+        init)               arg_mode_unified="init" ;;
+        add)                arg_mode_unified="add" ;;
+        L|list)             arg_mode_unified="list" ;;
+        l|load)             arg_mode_unified="load" ;;
+        mv|rename)          arg_mode_unified="rename" ;;
+        rm|remove)          arg_mode_unified="remove" ;;
+        reset)              arg_mode_unified="reset" ;;
+        config)             arg_mode_unified="config" ;;
+        h|help|-h|--help)   arg_mode_unified="help" ;;
+        -v|--version)       arg_mode_unified="version" ;;
+        -I|--info)          arg_mode_unified="info" ;;
         *)
             err "star: invalid mode '$arg_mode'"
             usage >&2
             return 1
             ;;
     esac
+
+    # call appropriate usage function if help option has been provided
+    if check_help_option_provided "$@"; then
+        usage_"$arg_mode_unified" "$@"
+        return 1
+    fi
+
+    # call appropriate mode function
+    star_mode_"$arg_mode_unified" "$@"
 }
 
 main "$@"
