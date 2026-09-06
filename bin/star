@@ -210,8 +210,8 @@ usage() {
 Usage: star [MODE]
        star [OPTION]
 
-Dynamically bookmark and cd into directories.
-Bookmarks are called "stars".
+    Dynamically bookmark and cd into directories.
+    Bookmarks are called "stars".
 
     MODE (related to stars management)
         add     Add a new star
@@ -269,7 +269,7 @@ usage_add() {
 Usage: star add PATH [NAME]
        star a PATH [NAME]
 
-Add a new star.
+    Add a new star.
 
     PATH
         Relative path to the directory to star.
@@ -286,17 +286,52 @@ EOF
 
 usage_list() {
     cat << EOF >&2
-Usage: star list [OPTIONS]
-       star L [OPTIONS]
+Usage: star list [LIST_FORMAT [OPTIONS]...]
+       star L [LIST_FORMAT [OPTIONS]...]
 
-List all stars, by default sorted according to last load (top ones are the last loaded stars).
+    List stars. By default (with no options nor configuration) the list will be sorted according to last load (top ones are the last loaded stars).
 
-Listing can be customized either by:
-- editing the environment variables in the configuration file (see 'star config' for more information)
-- using options supported by the 'star-list' helper script
+    DEFAULT BEHAVIOUR: when calling "star list" with no options
+        - sort:     the list is sorted according to the last time each star was loaded (last loaded stars on top)
+        - format:   the format is $LIST_DEFAULT_FORMAT
 
-Get the 'star-list' usage and options by running: 
- "\${_STAR_HOME}/libexec/star/star-list" --help
+        Those defaults can be changed either by:
+            - using options
+            - defining appropriate environment variables (options override environment variables)
+
+    LIST_FORMAT: Display the starred directories. List format are exclusives.
+        -f, --format=FORMAT     Print with a custom format.
+        -n, --names             Only print the star's names.
+        -p, --paths             Only print the star's paths.
+
+        OPTIONS: Changes how the stars are listed.
+            -s, --sort={name|loaded|none}   Default: loaded.
+            -o, --order={desc|asc}          Default: desc.
+            -i, --index={none|desc|asc}     Only with "--format". Default: asc.
+            -b, --broken                    Only search for broken symlinks.
+
+        FORMATTING:
+        The format value will be passed to the "printf" option of GNU find, meaning its formatting can be used, e.g.:
+            %f  file's name
+            %l  file's symlink target (i.e. absolute path of the star)
+        This script also provides the following placeholders that can be used in the format string:
+            <INDEX>     will be replaced by an index
+            <BR>        column separator (it is effectively replaced by a tab character, that the default "column" command uses as separator)
+            <COLNAME>   color for star names (replaced by value of \$__STAR_COLOR_NAME)
+            <COLPATH>   color for star paths (replaced by value of \$__STAR_COLOR_PATH)
+            <COLRESET>  default color (replaced by value of \$__STAR_COLOR_RESET)
+
+Alternative usage:
+    star list ITEM_MODE
+    star L ITEM_MODE
+
+    Those specific options are used to retrieve only a single item, not list all stars.
+    Any listing option will be ignored and no formatting will be applied.
+
+    ITEM_MODE: To retrieve a single bit of information.
+        -P, --get-path=NAME     Get the path of a star according to its name. Slashes should have been replaced by the separator.
+        -N, --get-name=PATH     Get the name of a star according to its path
+
 EOF
 }
 
