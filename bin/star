@@ -432,7 +432,7 @@ EOF
 star_mode_init() {
     if [[ $# -lt 1 ]]; then
         err "star init: missing SHELL_TYPE argument."
-        usage_init >&2
+        usage_init
         return 1
     fi
     # initialize star environment
@@ -443,7 +443,7 @@ star_mode_init() {
         bash|zsh) ;;
         *)
             err "star init: unknown SHELL_TYPE: $shell_type"
-            usage_init >&2
+            usage_init
             return 1
             ;;
     esac
@@ -472,7 +472,7 @@ star_mode_add() {
     # first argument has to be the relative path
     if [[ $# -lt 1 ]]; then
         err "star add: missing PATH argument."
-        usage_add >&2
+        usage_add
         return 1
     fi
     local src_dir
