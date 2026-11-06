@@ -346,9 +346,10 @@ Installation steps are the following:
 #### Recommended user installation (from release) <!-- omit from toc -->
 
 ```sh
-curl -L -o star-2.2.0.tar.gz https://github.com/Fruchix/star/releases/download/v2.2.0/star-2.2.0.tar.gz
-tar xvf star-2.2.0.tar.gz
-cd star-2.2.0
+version=2.2.0
+curl -L -o "star-${version}.tar.gz" "https://github.com/Fruchix/star/releases/download/v${version}/star-${version}.tar.gz"
+tar xvf "star-${version}.tar.gz"
+cd "star-${version}"
 ./configure --prefix=$HOME/.local
 ./install.sh
 
@@ -371,9 +372,10 @@ echo -e '\neval "$(command star init zsh)"' >> ~/.zshrc
 #### Recommended system installation (from release) <!-- omit from toc -->
 
 ```sh
-curl -L -o star-2.2.0.tar.gz https://github.com/Fruchix/star/releases/download/v2.2.0/star-2.2.0.tar.gz
-tar xvf star-2.2.0.tar.gz
-cd star-2.2.0
+version=2.2.0
+curl -L -o "star-${version}.tar.gz" "https://github.com/Fruchix/star/releases/download/v${version}/star-${version}.tar.gz"
+tar xvf "star-${version}.tar.gz"
+cd "star-${version}"
 ./configure         # by default, prefix is set to: /usr/local
 sudo ./install.sh
 
