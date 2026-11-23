@@ -64,6 +64,41 @@ _star_add_variable()
     export "$env_var_name"="$star_path"
 }
 
+_star_unset_variable()
+{
+    local star_name=$1
+    local star_path=$2
+    local env_var_name
+    # character used to replace slashes in the star names
+    local star_dir_separator="»"
+    local star_env_var_prefix="STAR_"
+
+    # convert name to a suitable environment variable name
+    env_var_name="${star_env_var_prefix}$(command echo "$star_name" | command tr ' +-.!?():,;=' '_' | command tr --complement --delete "a-zA-Z0-9_" | command tr '[:lower:]' '[:upper:]')"
+
+    # get the value of the environment variable corresponding to the star name
+    local env_var_value
+    env_var_value="$(command env | command grep "^${env_var_name}=" | command cut -d= -f2-)"
+
+    # if the value of the environment variable does not correspond to the path of the star name, then do not unset it
+    if [[ "$env_var_value" != "$star_path" ]]; then
+        return
+    fi
+
+    unset "$env_var_name"
+}
+
+_star_rename_variable()
+{
+    local old_star_name=$1
+    local new_star_name=$2
+    local star_path="$3"
+
+    # unset the old environment variable then set the new one
+    _star_unset_variable "$old_star_name" "$star_path"
+    _star_set_variable "$new_star_name" "$star_path"
+}
+
 _star_set_all_variables()
 {
     export ___STAR_ENABLE_ENVVARS_CURRENT_STATUS="$__STAR_ENABLE_ENVVARS"
@@ -465,6 +500,7 @@ star()
                     fi
 
                     command echo -e "Renamed star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                    _star_rename_variable "${rename_src}" "${rename_dst}" "$("${_STAR_HOME}/libexec/star/star-list" --get-path="${rename_dst//\//${star_dir_separator}}")"
                     return 0
                 fi
 
@@ -479,6 +515,7 @@ star()
                     return $res
                 fi
                 command echo -e "Renamed star ${COLOR_STAR}${rename_src//${star_dir_separator}//}${COLOR_RESET} to ${COLOR_STAR}${rename_dst//${star_dir_separator}//}${COLOR_RESET}."
+                _star_rename_variable "${rename_src}" "${rename_dst}" "$("${_STAR_HOME}/libexec/star/star-list" --get-path="${rename_dst//\//${star_dir_separator}}")"
                 return 0
             else
                 command echo -e "Star ${COLOR_STAR}${rename_src}${COLOR_RESET} does not exist."
