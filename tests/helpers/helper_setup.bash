@@ -34,10 +34,11 @@ setup_common() {
   export PATH="$PWD/bin:$PATH"
   export _STAR_DATA_HOME=$TEST_ROOT
 
+  # override the config file to avoid using the default one
+  export _STAR_CONFIG_FILE="/dev/null"
+
   export __STAR_LIST_FORMAT="<INDEX><BR><COLNAME>%f<COLRESET><BR>-><BR><COLPATH>%l<COLRESET>"
-  export __STAR_ENABLE_ENVVARS=yes
   # export __STAR_LIST_FORMAT="<COLNAME>%f<COLRESET><BR>-><BR><COLPATH>%l<COLRESET>"
-  # export __STAR_ENABLE_ENVVARS=no
 
   export CURRENT_TEST_DATA_DIR="${_STAR_DATA_HOME}/stars"
 
