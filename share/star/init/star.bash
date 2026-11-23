@@ -64,7 +64,7 @@ _star_add_variable()
     export "$env_var_name"="$star_path"
 }
 
-_star_set_variables()
+_star_set_all_variables()
 {
     export ___STAR_ENABLE_ENVVARS_CURRENT_STATUS="$__STAR_ENABLE_ENVVARS"
     if [[ $__STAR_ENABLE_ENVVARS != "yes" ]]; then
@@ -88,7 +88,7 @@ _star_set_variables()
     done
 }
 
-_star_unset_variables()
+_star_unset_all_variables()
 {
     export ___STAR_ENABLE_ENVVARS_CURRENT_STATUS="$__STAR_ENABLE_ENVVARS"
     # return if the star directory does not exist
@@ -134,9 +134,9 @@ star()
     # set environment variables if the status has changed
     if [[ "$__STAR_ENABLE_ENVVARS" != "$___STAR_ENABLE_ENVVARS_CURRENT_STATUS" ]]; then
         if [[ "$__STAR_ENABLE_ENVVARS" == "yes" ]]; then
-            _star_set_variables
+            _star_set_all_variables
         else
-            _star_unset_variables
+            _star_unset_all_variables
         fi
     fi
 
@@ -427,10 +427,6 @@ star()
             fi
             ;;
         RENAME)
-            # remove the environment variable corresponding to the old name
-            # (easier to remove all environment variables)
-            _star_unset_variables
-
             local res
             if [[ -e "${_STAR_DATA_HOME}/stars/${rename_src}" ]]; then
                 # if names are the same except for case then try to bypass using temporary rename
@@ -488,9 +484,6 @@ star()
                 command echo -e "Star ${COLOR_STAR}${rename_src}${COLOR_RESET} does not exist."
                 return 1
             fi
-
-            # update environment variables
-            _star_set_variables
             ;;
         REMOVE)
             local star_name
@@ -500,7 +493,7 @@ star()
             fi
 
             # remove all env variables while their paths are still known
-            _star_unset_variables
+            _star_unset_all_variables
 
             for star_name in "${stars_to_remove[@]}"; do
                 if [[ -e "${_STAR_DATA_HOME}/stars/${star_name}" ]]; then
@@ -516,7 +509,7 @@ star()
                 fi
             done
             # re create the other environment variables
-            _star_set_variables
+            _star_set_all_variables
             ;;
         RESET)
             if [[ ! -d "${_STAR_DATA_HOME}/stars" || -z "$(command ls -A "${_STAR_DATA_HOME}/stars" )" ]];then
@@ -540,7 +533,7 @@ star()
             fi
 
             # remove all env variables while their paths are still known
-            _star_unset_variables
+            _star_unset_all_variables
 
             local ret
             command rm -r "${_STAR_DATA_HOME}/stars"
@@ -593,9 +586,9 @@ star()
 
 # set environment variables
 if [[ "$__STAR_ENABLE_ENVVARS" == "yes" ]]; then
-    _star_set_variables
+    _star_set_all_variables
 else
-    _star_unset_variables
+    _star_unset_all_variables
 fi
 
 if [[ "$__STAR_ENABLE_ALIASES" == "yes" ]]; then
