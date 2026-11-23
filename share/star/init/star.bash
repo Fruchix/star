@@ -147,7 +147,7 @@ _star_unset_all_variables()
 
     for variable in "${variables_list[@]}"; do
         # unset the variable only if its value corresponds to an existing star path (absolute path of a starred directory)
-        star_path="$(command echo "$variable" | command cut -d"=" -f2)"
+        star_path="$(command echo "$variable" | command cut -d"=" -f2-)"
         if ! command find "${_STAR_DATA_HOME}/stars" -type l -not -xtype l -printf "%l\n" | command grep "^${star_path}$" &> /dev/null ; then
             continue
         fi
