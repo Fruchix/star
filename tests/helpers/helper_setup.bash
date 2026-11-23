@@ -19,7 +19,8 @@ teardown_tmpdir() {
   rm -rf "$TEST_ROOT"
 }
 
-setup_common() {
+# load star function from the star script
+init_star() {
   local current_shell_type
   current_shell_type="$(detect_shell_type)"
 
@@ -28,6 +29,10 @@ setup_common() {
     return 1
   fi
 
+  eval "$(command $TEST_STAR init "${current_shell_type}")"
+}
+
+setup_common() {
   # create tmp dir and set $TEST_ROOT
   setup_tmpdir
 
@@ -45,7 +50,7 @@ setup_common() {
   export TEST_STAR="${TEST_STAR:-star}"
 
   # load star function
-  eval "$(command $TEST_STAR init "${current_shell_type}")"
+  init_star
 }
 
 teardown_common() {
