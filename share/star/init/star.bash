@@ -41,8 +41,12 @@ export __STAR_ENABLE_ALIASES="${__STAR_ENABLE_ALIASES:-"yes"}"
 # Enable (yes) or disable (no) whether "star load" with no arguments is equivalent to "star list" or causes an error
 export __STAR_ENABLE_LOADLISTS="${__STAR_ENABLE_LOADLISTS:-"yes"}"
 
-_star_add_variable()
+_star_set_variable()
 {
+    if [[ "$__STAR_ENABLE_ENVVARS" != "yes" ]]; then
+        return
+    fi
+
     local star_name=$1
     local star_path=$2
     local env_var_name
@@ -119,7 +123,7 @@ _star_set_all_variables()
     done < <(command find "${_STAR_DATA_HOME}/stars" -type l -not -xtype l -printf "%f %l\n")
 
     for star_name_and_path in "${stars_list[@]}"; do
-        _star_add_variable "${star_name_and_path%% *}" "${star_name_and_path##* }"
+        _star_set_variable "${star_name_and_path%% *}" "$(command echo "${star_name_and_path}" | command cut -d" " -f2-)"
     done
 }
 
@@ -400,10 +404,7 @@ star()
             fi
             command echo -e "Added new starred directory: ${COLOR_STAR}${dst_name//${star_dir_separator}//}${COLOR_RESET} -> ${COLOR_PATH}${src_dir}${COLOR_RESET}."
 
-            # update environment variables
-            if [[ "$__STAR_ENABLE_ENVVARS" == "yes" ]]; then
-                _star_add_variable "${dst_name}" "${src_dir}"
-            fi
+            _star_set_variable "${dst_name}" "${src_dir}"
             ;;
         LOAD)
             if [[ ! -d "${_STAR_DATA_HOME}/stars" ]]; then
