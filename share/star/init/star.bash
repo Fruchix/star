@@ -539,24 +539,24 @@ star()
                 return 1
             fi
 
-            # remove all env variables while their paths are still known
-            _star_unset_all_variables
-
+            local star_path
             for star_name in "${stars_to_remove[@]}"; do
                 if [[ -e "${_STAR_DATA_HOME}/stars/${star_name}" ]]; then
+                    # get the path of the starred directory to remove while the symlink still exists
+                    star_path=$("${_STAR_HOME}/libexec/star/star-list" --get-path="${star_name}")
                     if ! command rm "${_STAR_DATA_HOME}/stars/${star_name}"; then
                         local res=$?
                         command echo -e "Failed to remove starred directory: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
                         return $res
                     fi
                     command echo -e "Removed starred directory: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
+                    # unset the environment variable corresponding to the removed star
+                    _star_unset_variable "${star_name}" "$star_path"
                 else
                     command echo -e "Could not find any starred directory with the name: ${COLOR_STAR}${star_name//${star_dir_separator}//}${COLOR_RESET}."
                     return 1
                 fi
             done
-            # re create the other environment variables
-            _star_set_all_variables
             ;;
         RESET)
             if [[ ! -d "${_STAR_DATA_HOME}/stars" || -z "$(command ls -A "${_STAR_DATA_HOME}/stars" )" ]];then
