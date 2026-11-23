@@ -68,6 +68,10 @@ _star_set_variable()
     export "$env_var_name"="$star_path"
 }
 
+# Usage: _star_unset_variable <star_name> <star_path>
+# - star_name: the name of the star to unset
+# - star_path: the path the environment variable should have been set to (to avoid unsetting variables that were not set by star)
+#              If the path does not exist anymore, it still unsets the variable, as it is assumed that the star was removed
 _star_unset_variable()
 {
     local star_name=$1
@@ -127,6 +131,11 @@ _star_set_all_variables()
     done
 }
 
+# Usage: _star_unset_all_variables
+#   Will unset unset all environment variables that were set by star, 
+#   by checking if the value of the variable corresponds to an existing starred directory path.
+#   Cannot be used after removing a star because the path of the star will not exist anymore,
+#   so it will not be able to determine if the variable was set by star or not.
 _star_unset_all_variables()
 {
     export ___STAR_ENABLE_ENVVARS_CURRENT_STATUS="$__STAR_ENABLE_ENVVARS"
